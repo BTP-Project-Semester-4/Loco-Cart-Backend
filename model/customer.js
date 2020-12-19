@@ -15,5 +15,5 @@ const customerschema=new mongoose.Schema({
     },
 
 });
-const Products = mongoose.model("Customer",customerschema);
+const Customer = mongoose.model("Customer",customerschema);
 
