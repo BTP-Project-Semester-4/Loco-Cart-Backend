@@ -17,6 +17,6 @@ const sellerSchema = new mongoose.Schema({
     required: true,
   },
 });
-const Order = mongoose.model("Seller", sellerSchema);
+const Seller = mongoose.model("Seller", sellerSchema);
 export default Seller;
 
