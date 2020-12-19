@@ -17,6 +17,13 @@ app.use(bodyParser.json());
 app.use(cors());
 env.config();
 
+const url = process.env.MONGODB;
+mongoose.connect(`${url}`, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+});
+
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
   console.log(`Server Running at http://${hostname}:${port}/`);
