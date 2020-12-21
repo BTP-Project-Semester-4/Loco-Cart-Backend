@@ -1,6 +1,6 @@
 const mongoose=require("mongoose");
-const customerschema=new mongoose.Schema({
-
+const customerSchema=new mongoose.Schema(
+    {
     name: {type: String, required: true},
     email: {type: String, required: true, unique: true},
     contactNo: {type: String, required: true, unique: true},
@@ -15,5 +15,6 @@ const customerschema=new mongoose.Schema({
     },
 
 });
-const Products = mongoose.model("Customer",customerschema);
+const Customer = mongoose.model("Customer",customerSchema);
+export default Customer;
 
