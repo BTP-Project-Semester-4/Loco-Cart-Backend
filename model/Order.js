@@ -37,6 +37,10 @@ const orderSchema = new mongoose.Schema(
      totalPrice:{
        type: Number,
        required: true
+     },
+     orderedAt:{
+       type: Date,
+       default: Date.now
      }
   }
 );
