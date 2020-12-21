@@ -1,10 +1,11 @@
 // DECLARING MODULES
 const express = require("express");
 const cors = require("cors");
-const moongoose = require("mongoose");
+const mongoose = require("mongoose");
 const env = require("dotenv");
 const http = require("http");
 const bodyParser = require("body-parser");
+const sellerRoute = require("./router/SellerRouter.js");
 
 //DEFINING MODULES
 const app = express();
@@ -23,6 +24,8 @@ mongoose.connect(`${url}`, {
   useUnifiedTopology: true,
   useCreateIndex: true,
 });
+
+app.use("/api/sellers", sellerRoute);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
