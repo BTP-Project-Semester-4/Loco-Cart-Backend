@@ -8,6 +8,7 @@ const bodyParser = require("body-parser");
 const sellerRoute = require("./router/SellerRouter.js");
 const seller = require('./router/seller');
 const customer = require("./router/customer.js");
+const customerRoute = require("./router/CustomerRouter.js");
 
 //DEFINING MODULES
 const app = express();
@@ -30,6 +31,7 @@ mongoose.connect(`${url}`, {
 app.use("/api/sellers", sellerRoute);
 app.use('/api/seller',seller);
 app.use('/api/customer',customer);
+app.use("/api/customers",customerRoute);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
