@@ -20,12 +20,12 @@ app.use(bodyParser.json());
 app.use(cors());
 env.config();
 
-// const url = process.env.MONGODB;
-// mongoose.connect(`${url}`, {
-//   useNewUrlParser: true,
-//   useUnifiedTopology: true,
-//   useCreateIndex: true,
-// });
+const url = process.env.MONGODB;
+mongoose.connect(`${url}`, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useCreateIndex: true,
+});
 
 app.use("/api/sellers", sellerRoute);
 app.use('/api/seller',seller);
