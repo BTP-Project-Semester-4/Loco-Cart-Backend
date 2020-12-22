@@ -6,6 +6,8 @@ const env = require("dotenv");
 const http = require("http");
 const bodyParser = require("body-parser");
 const sellerRoute = require("./router/SellerRouter.js");
+const seller = require('./router/seller');
+const customer = require("./router/customer.js");
 
 //DEFINING MODULES
 const app = express();
@@ -18,14 +20,16 @@ app.use(bodyParser.json());
 app.use(cors());
 env.config();
 
-const url = process.env.MONGODB;
-mongoose.connect(`${url}`, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useCreateIndex: true,
-});
+// const url = process.env.MONGODB;
+// mongoose.connect(`${url}`, {
+//   useNewUrlParser: true,
+//   useUnifiedTopology: true,
+//   useCreateIndex: true,
+// });
 
 app.use("/api/sellers", sellerRoute);
+app.use('/api/seller',seller);
+app.use('/api/customer',customer);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
