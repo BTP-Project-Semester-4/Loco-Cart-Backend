@@ -6,6 +6,8 @@ const env = require("dotenv");
 const http = require("http");
 const bodyParser = require("body-parser");
 const sellerRoute = require("./router/SellerRouter.js");
+const seller = require('./router/seller');
+const customer = require("./router/customer.js");
 const customerRoute = require("./router/CustomerRouter.js");
 
 //DEFINING MODULES
@@ -27,7 +29,9 @@ mongoose.connect(`${url}`, {
 });
 
 app.use("/api/sellers", sellerRoute);
-app.use("/api/customer",customerRoute);
+app.use('/api/seller',seller);
+app.use('/api/customer',customer);
+app.use("/api/customers",customerRoute);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
