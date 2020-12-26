@@ -26,12 +26,18 @@ sellerRouter.post(
 sellerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
-    const seller = new seller({
+    const seller = new Seller({
       name: req.body.name,
       email: req.body.email,
       password: bcrypt.hashSync(req.body.password, 8),
+      contactNo: req.body.contactNo,
+      category: req.body.category,
+      homeDelivery: req.body.homeDelivery,
+      deliveryCharges: req.body.deliveryCharges,
+      location: req.body.location,
+      profilePictureUrl: req.body.profilePictureUrl,
     });
-    const createSeller = await Seller.save();
+    const createSeller = await seller.save();
     res.send({
       _id: createSeller._id,
       name: createSeller.name,
@@ -47,4 +53,27 @@ sellerRouter.post(
     });
   })
 );
+
+sellerRouter.get(
+  "/:id",
+  expressAsyncHandler(async (req, res) => {
+    const sellerId = req.params.id;
+    const seller = await Seller.findOne({ _id: sellerId });
+    if (seller) {
+      return res.status(200).send({
+        _id: seller._id,
+        name: seller.name,
+        category: seller.category,
+        rating: seller.rating,
+        homeDelivery: seller.homeDelivery,
+        location: seller.location,
+        profilePictureUrl: seller.profilePictureUrl,
+      });
+    }
+    return res
+      .status(400)
+      .send({ message: "Could not find the requested resource" });
+  })
+);
+
 module.exports = sellerRouter;
