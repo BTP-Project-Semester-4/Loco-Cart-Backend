@@ -7,14 +7,9 @@ const orderSchema = new mongoose.Schema(
        ref: "Customer",
        required:true
      },
-     seller:{
-       type: [
-          {
-           type: mongoose.Schema.Types.ObjectId,
-           ref:"Seller"
-          }
-       ],
-       default:[]
+     sellerId:{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Seller",
      },
      itemList:{
        type: [
