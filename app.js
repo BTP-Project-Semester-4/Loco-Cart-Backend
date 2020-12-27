@@ -7,6 +7,7 @@ const http = require("http");
 const bodyParser = require("body-parser");
 const sellerRoute = require("./router/SellerRouter.js");
 const customerRoute = require("./router/CustomerRouter.js");
+//const auth = require('./router/auth');
 
 //DEFINING MODULES
 const app = express();

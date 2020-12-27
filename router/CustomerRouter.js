@@ -3,6 +3,8 @@ const bcrypt = require("bcrypt");
 const Customer = require("../model/Customer.js");
 const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
+const nodemailer = require('nodemailer')
+const env = require('dotenv');
 
 const customerRouter = express.Router();
 
@@ -27,6 +29,45 @@ customerRouter.post(
 customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
+    //CHECKING WHETHER CUSTOMER WITH GIVEN EMAIL EXISTS IN THE DATABASE OR NOT
+    const user = await Customer.findOne({email:req.body.email});
+    if(user){
+      return res.status(200).send({message:"Customer with this email already exists"});
+    }
+
+    //GENERATING A 6 DIGIT OTP
+    var digits = '0123456789';
+    let OTP = '';
+    for(let i=0;i<6;i++){
+      OTP+= digits[Math.floor(Math.random()*10)];
+    }
+
+    //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
+    let transporter = nodemailer.createTransport({
+      service:'gmail',
+      auth:{
+        user: process.env.COMPANY_EMAIL,
+        pass: process.env.COMPANY_PASSWORD
+      }
+    });
+
+    let mailOptions = {
+      from: process.env.COMPANY_EMAIL,
+      to: req.body.email,
+      subject: 'One Time Password for email verification',
+      text: `Welcome to Lococart...You are just one step away from verifying your email.
+            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`
+    }
+
+    transporter.sendMail(mailOptions,function(err,data){
+      if(err){
+        console.log("Error :",err);
+      }else{
+        console.log("OTP Email sent successfully");
+      }
+    })
+
+    //SAVING THE NEW CUSTOMER IN THE DATABASE
     const customer = new Customer({
       name: req.body.name,
       email: req.body.email,
@@ -36,6 +77,8 @@ customerRouter.post(
       state: req.body.state,
       country: req.body.country,
       password: bcrypt.hashSync(req.body.password, 8),
+      otp: OTP,
+      isAuthenticated:false,
     });
     const createCustomer = await customer.save();
     res.send({
