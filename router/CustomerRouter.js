@@ -6,7 +6,6 @@ const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require('nodemailer')
 const env = require('dotenv');
 
-
 const customerRouter = express.Router();
 
 customerRouter.post(

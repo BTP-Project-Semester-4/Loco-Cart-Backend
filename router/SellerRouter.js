@@ -68,8 +68,6 @@ sellerRouter.post(
     })
 
     //SAVING THE NEW SELLER IN TEH DATABASE
-
-
     const seller = new Seller({
       name: req.body.name,
       email: req.body.email,
