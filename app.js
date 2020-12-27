@@ -19,17 +19,21 @@ app.use(bodyParser.json());
 app.use(cors());
 env.config();
 
+//CONNECTING MONGO DB
 const url = process.env.MONGODB;
 mongoose.connect(`${url}`, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
   useCreateIndex: true,
 });
+const connection = mongoose.connection;
+connection.once("open", () => {
+  console.log("MongoDB database connection established successfully");
+});
 
-app.use("/api/sellers", sellerRoute);
-// app.use('/api/seller',seller);
-// app.use('/api/customer',customer);
-app.use("/api/customers", customerRoute);
+// SENDING TO ROUTES
+app.use("/api/seller", sellerRoute);
+app.use("/api/customer", customerRoute);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
