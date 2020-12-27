@@ -13,6 +13,7 @@ customerRouter.post(
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
         res.send({
+          _id: customer._id,
           name: customer.name,
           email: customer.email,
         });
@@ -29,14 +30,22 @@ customerRouter.post(
     const customer = new Customer({
       name: req.body.name,
       email: req.body.email,
+      address: req.body.address,
+      contactNo: req.body.contactNo,
+      city: req.body.city,
+      state: req.body.state,
+      country: req.body.country,
       password: bcrypt.hashSync(req.body.password, 8),
     });
-    const createCustomer = await Customer.save();
+    const createCustomer = await customer.save();
     res.send({
       name: createCustomer.name,
       email: createCustomer.email,
       contactNo: createCustomer.contactNo,
-      location: createCustomer.location,
+      address: createCustomer.address,
+      city: createCustomer.city,
+      state: createCustomer.state,
+      country: createCustomer.country,
       password: createCustomer.password,
       profilePictureUrl: createCustomer.profilePictureUrl,
     });

@@ -15,6 +15,8 @@ sellerRouter.post(
           _id: seller._id,
           name: seller.name,
           email: seller.email,
+          city: seller.city,
+          rating: seller.rating,
         });
         return;
       }
@@ -34,7 +36,10 @@ sellerRouter.post(
       category: req.body.category,
       homeDelivery: req.body.homeDelivery,
       deliveryCharges: req.body.deliveryCharges,
-      location: req.body.location,
+      address: req.body.address,
+      city: req.body.city,
+      state: req.body.state,
+      country: req.body.country,
       profilePictureUrl: req.body.profilePictureUrl,
     });
     const createSeller = await seller.save();
@@ -47,7 +52,10 @@ sellerRouter.post(
       category: createSeller.category,
       homeDelivery: createSeller.homeDelivery,
       deliveryCharges: createSeller.deliveryCharges,
-      location: createSeller.location,
+      address: req.body.address,
+      city: createSeller.city,
+      state: createSeller.state,
+      country: createSeller.country,
       password: createSeller.password,
       profilePictureUrl: createSeller.profilePictureUrl,
     });
@@ -66,7 +74,10 @@ sellerRouter.get(
         category: seller.category,
         rating: seller.rating,
         homeDelivery: seller.homeDelivery,
-        location: seller.location,
+        address: seller.address,
+        city: seller.city,
+        state: seller.state,
+        country: seller.country,
         profilePictureUrl: seller.profilePictureUrl,
       });
     }
