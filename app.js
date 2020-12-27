@@ -36,7 +36,6 @@ connection.once("open", () => {
 
 // SENDING TO ROUTES
 app.use("/api/seller", sellerRoute);
-app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/customer", customerRoute);
 app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/sellerpastorder", sellerPastOrderRoute);
