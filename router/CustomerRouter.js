@@ -1,6 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
-const Customer = require("../../model/Customer.js");
+const Customer = require("../model/Customer");
 const expressAsyncHandler = require("express-async-handler");
 
 const customerRouter = express.Router();

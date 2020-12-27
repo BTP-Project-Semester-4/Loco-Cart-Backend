@@ -9,6 +9,7 @@ const sellerRoute = require("./router/SellerRouter.js");
 const seller = require('./router/seller');
 const customer = require("./router/customer.js");
 const customerRoute = require("./router/CustomerRouter.js");
+//const auth = require('./router/auth');
 
 //DEFINING MODULES
 const app = express();
@@ -27,11 +28,11 @@ mongoose.connect(`${url}`, {
   useUnifiedTopology: true,
   useCreateIndex: true,
 });
-
 app.use("/api/sellers", sellerRoute);
 app.use('/api/seller',seller);
 app.use('/api/customer',customer);
 app.use("/api/customers",customerRoute);
+//app.use('/auth',auth)
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
