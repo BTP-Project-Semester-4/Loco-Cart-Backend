@@ -27,13 +27,6 @@ mongoose.connect(`${url}`, {
   useUnifiedTopology: true,
   useCreateIndex: true,
 });
-<<<<<<< HEAD
-app.use("/api/sellers", sellerRoute);
-app.use('/api/seller',seller);
-app.use('/api/customer',customer);
-app.use("/api/customers",customerRoute);
-//app.use('/auth',auth)
-=======
 const connection = mongoose.connection;
 connection.once("open", () => {
   console.log("MongoDB database connection established successfully");
@@ -42,7 +35,6 @@ connection.once("open", () => {
 // SENDING TO ROUTES
 app.use("/api/seller", sellerRoute);
 app.use("/api/customer", customerRoute);
->>>>>>> ab40a408876cd153476f81b5c37a19b90b19ae00
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
