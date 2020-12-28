@@ -1,10 +1,9 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const Seller = require("../model/Seller.js");
 const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require('nodemailer');
 const env = require('dotenv');
-
 const sellerRouter = express.Router();
 
 sellerRouter.post(
@@ -69,7 +68,6 @@ sellerRouter.post(
     })
 
     //SAVING THE NEW SELLER IN TEH DATABASE
-
     const seller = new Seller({
       name: req.body.name,
       email: req.body.email,
