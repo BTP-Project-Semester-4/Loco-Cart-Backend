@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const Seller = require("../model/Seller.js");
 const expressAsyncHandler = require("express-async-handler");
 

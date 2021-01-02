@@ -1,5 +1,5 @@
 const express = require("express");
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const Customer = require("../model/Customer.js");
 const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
@@ -12,15 +12,19 @@ customerRouter.post(
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
+        console.log(req.body.email + " password verified");
         res.send({
           _id: customer._id,
-          name: customer.name,
+          name: customer.firstName,
           email: customer.email,
         });
-        return;
+      } else {
+        console.log(req.body.email + " password not verified");
       }
+    } else {
+      res.status(401).send({ message: "Invalid email or password" });
+      console.log("Invalid email or password");
     }
-    res.status(401).send({ message: "Invalid email or password" });
   })
 );
 
@@ -28,7 +32,8 @@ customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
     const customer = new Customer({
-      name: req.body.name,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       email: req.body.email,
       address: req.body.address,
       contactNo: req.body.contactNo,
@@ -39,7 +44,8 @@ customerRouter.post(
     });
     const createCustomer = await customer.save();
     res.send({
-      name: createCustomer.name,
+      firstName: createCustomer.firstName,
+      lastName: createCustomer.lastName,
       email: createCustomer.email,
       contactNo: createCustomer.contactNo,
       address: createCustomer.address,
@@ -61,7 +67,7 @@ customerRouter.get(
       //ratings/reviews to be sent once they are added to customer schema
       return res.status(200).send({
         _id: customer._id,
-        name: customer.name,
+        name: customer.firstName,
         profilePictureUrl: customerId.profilePictureUrl,
       });
     }
