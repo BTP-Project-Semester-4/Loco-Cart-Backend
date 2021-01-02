@@ -1,5 +1,6 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 const Customer = require("../model/Customer.js");
 const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
@@ -19,13 +20,13 @@ customerRouter.post(
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
-        return res.status(200).send({
+        var token = jwt.sign({
           _id: customer._id,
           name: customer.name,
           email: customer.email,
-          isAuthenticated: customer.isAuthenticated,
-          message: "Success"
-        });
+          isAuthenticated: customer.isAuthenticated
+        },process.env.JWT_SECRET);
+        return res.status(200).json({token,message: "Success",isAuthenticated: customer.isAuthenticated});
       }
     }
     res.status(401).send({ message: "Invalid email or password" });
