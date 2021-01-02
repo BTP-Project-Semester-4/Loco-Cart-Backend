@@ -3,24 +3,30 @@ const bcrypt = require("bcryptjs");
 const Customer = require("../model/Customer.js");
 const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
+const nodemailer = require('nodemailer')
+const env = require('dotenv');
 
 const customerRouter = express.Router();
 
 customerRouter.post(
   "/signin",
   expressAsyncHandler(async (req, res) => {
+    if(!req.body.email){
+      return res.status(422).send({message:"Please enter email id"});
+    }else if(!req.body.password){
+      return res.status(422).send({message:"Please enter password"});
+    }
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
-        console.log(req.body.email + " password verified");
-        res.send({
+
+        return res.status(200).send({
           _id: customer._id,
           name: customer.firstName,
           email: customer.email,
+          isAuthenticated: customer.isAuthenticated,
+          message: "Success"
         });
-      } else {
-        console.log(req.body.email + " password not verified");
-      }
     } else {
       res.status(401).send({ message: "Invalid email or password" });
       console.log("Invalid email or password");
@@ -31,6 +37,45 @@ customerRouter.post(
 customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
+    //CHECKING WHETHER CUSTOMER WITH GIVEN EMAIL EXISTS IN THE DATABASE OR NOT
+    const user = await Customer.findOne({email:req.body.email});
+    if(user){
+      return res.status(200).send({message:"Customer with this email already exists"});
+    }
+
+    //GENERATING A 6 DIGIT OTP
+    var digits = '0123456789';
+    let OTP = '';
+    for(let i=0;i<6;i++){
+      OTP+= digits[Math.floor(Math.random()*10)];
+    }
+
+    //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
+    let transporter = nodemailer.createTransport({
+      service:'gmail',
+      auth:{
+        user: process.env.COMPANY_EMAIL,
+        pass: process.env.COMPANY_PASSWORD
+      }
+    });
+
+    let mailOptions = {
+      from: process.env.COMPANY_EMAIL,
+      to: req.body.email,
+      subject: 'One Time Password for email verification',
+      text: `Welcome to Lococart...You are just one step away from verifying your email.
+            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`
+    }
+
+    transporter.sendMail(mailOptions,function(err,data){
+      if(err){
+        console.log("Error :",err);
+      }else{
+        console.log("OTP Email sent successfully");
+      }
+    })
+
+    //SAVING THE NEW CUSTOMER IN THE DATABASE
     const customer = new Customer({
       firstName: req.body.firstName,
       lastName: req.body.lastName,
@@ -41,6 +86,8 @@ customerRouter.post(
       state: req.body.state,
       country: req.body.country,
       password: bcrypt.hashSync(req.body.password, 8),
+      otp: OTP,
+      isAuthenticated:false,
     });
     const createCustomer = await customer.save();
     res.send({

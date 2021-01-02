@@ -2,7 +2,8 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const Seller = require("../model/Seller.js");
 const expressAsyncHandler = require("express-async-handler");
-
+const nodemailer = require('nodemailer');
+const env = require('dotenv');
 const sellerRouter = express.Router();
 
 sellerRouter.post(
@@ -28,6 +29,45 @@ sellerRouter.post(
 sellerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
+    //CHECKING WHETHER SELLER WITH GIVEN EMAIL EXISTS IN THE DATABASE OR NOT
+    const user = await Seller.findOne({email: req.body.email});
+    if(user){
+      return res.status(200).send({message:"Seller with this email already exists"});
+    } 
+
+    //GENERATING A 6 DIGIT OTP
+    var digits = '0123456789';
+    let OTP = '';
+    for(let i=0;i<6;i++){
+      OTP+= digits[Math.floor(Math.random()*10)];
+    }
+
+    //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
+    let transporter = nodemailer.createTransport({
+      service:'gmail',
+      auth:{
+        user: process.env.COMPANY_EMAIL,
+        pass: process.env.COMPANY_PASSWORD
+      }
+    });
+
+    let mailOptions = {
+      from: process.env.COMPANY_EMAIL,
+      to: req.body.email,
+      subject: 'One Time Password for email verification',
+      text: `Welcome to Lococart...You are just one step away from verifying your email.
+            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`
+    }
+
+    transporter.sendMail(mailOptions,function(err,data){
+      if(err){
+        console.log("Error :",err);
+      }else{
+        console.log("OTP Email sent successfully");
+      }
+    })
+
+    //SAVING THE NEW SELLER IN TEH DATABASE
     const seller = new Seller({
       name: req.body.name,
       email: req.body.email,
@@ -41,6 +81,8 @@ sellerRouter.post(
       state: req.body.state,
       country: req.body.country,
       profilePictureUrl: req.body.profilePictureUrl,
+      otp:OTP,
+      isAuthenticated:false,
     });
     const createSeller = await seller.save();
     res.send({
