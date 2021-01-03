@@ -20,15 +20,16 @@ customerRouter.post(
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
+        const token = jwt.sign({_id:customer._id},process.env.JWT_SECRET);
+        const {_id,email,firstName,lastName,isAuthenticated} = customer;
         return res.status(200).send({
-          _id: customer._id,
-          name: customer.name,
-          email: customer.email,
-          isAuthenticated: customer.isAuthenticated,
+          customer:{_id,email,firstName,lastName,isAuthenticated},
           message: "Success",
+          token: token
         });
       }
     }
+    res.status(401).send({message:"Invalid email or password"});
   })
 );
 
