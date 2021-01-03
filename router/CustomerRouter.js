@@ -12,22 +12,21 @@ const customerRouter = express.Router();
 customerRouter.post(
   "/signin",
   expressAsyncHandler(async (req, res) => {
-    if(!req.body.email){
-      return res.status(422).send({message:"Please enter email id"});
-    }else if(!req.body.password){
-      return res.status(422).send({message:"Please enter password"});
+    if (!req.body.email) {
+      return res.status(422).send({ message: "Please enter email id" });
+    } else if (!req.body.password) {
+      return res.status(422).send({ message: "Please enter password" });
     }
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
         return res.status(200).send({
-        var token = jwt.sign({
           _id: customer._id,
-          name: customer.firstName,
+          name: customer.name,
           email: customer.email,
-          isAuthenticated: customer.isAuthenticated
-        },process.env.JWT_SECRET);
-        return res.status(200).json({token,message: "Success",isAuthenticated: customer.isAuthenticated});
+          isAuthenticated: customer.isAuthenticated,
+          message: "Success",
+        });
       }
     }
   })
