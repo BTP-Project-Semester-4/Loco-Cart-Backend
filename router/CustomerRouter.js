@@ -12,24 +12,23 @@ const customerRouter = express.Router();
 customerRouter.post(
   "/signin",
   expressAsyncHandler(async (req, res) => {
-    if(!req.body.email){
-      return res.status(422).send({message:"Please enter email id"});
-    }else if(!req.body.password){
-      return res.status(422).send({message:"Please enter password"});
+    if (!req.body.email) {
+      return res.status(422).send({ message: "Please enter email id" });
+    } else if (!req.body.password) {
+      return res.status(422).send({ message: "Please enter password" });
     }
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
-        var token = jwt.sign({
+        return res.status(200).send({
           _id: customer._id,
           name: customer.name,
           email: customer.email,
-          isAuthenticated: customer.isAuthenticated
-        },process.env.JWT_SECRET);
-        return res.status(200).json({token,message: "Success",isAuthenticated: customer.isAuthenticated});
+          isAuthenticated: customer.isAuthenticated,
+          message: "Success",
+        });
       }
     }
-    res.status(401).send({ message: "Invalid email or password" });
   })
 );
 
@@ -76,7 +75,8 @@ customerRouter.post(
 
     //SAVING THE NEW CUSTOMER IN THE DATABASE
     const customer = new Customer({
-      name: req.body.name,
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
       email: req.body.email,
       address: req.body.address,
       contactNo: req.body.contactNo,
@@ -89,7 +89,8 @@ customerRouter.post(
     });
     const createCustomer = await customer.save();
     res.send({
-      name: createCustomer.name,
+      firstName: createCustomer.firstName,
+      lastName: createCustomer.lastName,
       email: createCustomer.email,
       contactNo: createCustomer.contactNo,
       address: createCustomer.address,
@@ -111,7 +112,7 @@ customerRouter.get(
       //ratings/reviews to be sent once they are added to customer schema
       return res.status(200).send({
         _id: customer._id,
-        name: customer.name,
+        name: customer.firstName,
         profilePictureUrl: customerId.profilePictureUrl,
       });
     }
