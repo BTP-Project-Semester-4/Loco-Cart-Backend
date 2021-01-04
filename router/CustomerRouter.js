@@ -24,6 +24,7 @@ customerRouter.post(
         return res.status(200).send({
           _id: customer._id,
           firstName: customer.firstName,
+
           email: customer.email,
           isAuthenticated: customer.isAuthenticated,
           message: "Success",
