@@ -20,14 +20,13 @@ customerRouter.post(
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
-        console.log(req.body.email + " password valid");
-        return res.status(200).send({
-          _id: customer._id,
-          firstName: customer.firstName,
 
-          email: customer.email,
-          isAuthenticated: customer.isAuthenticated,
+        console.log(req.body.email + " password valid");
+        const token = jwt.sign({_id:customer._id},process.env.JWT_SECRET);
+        return res.status(200).send({
+         customer:{_id,email,firstName,lastName,isAuthenticated},
           message: "Success",
+          token: token
         });
       } else {
         console.log(req.body.email + " password not valid");
@@ -35,6 +34,7 @@ customerRouter.post(
     } else {
       console.log("Invalid email");
     }
+    res.status(401).send({message:"Invalid email or password"});
   })
 );
 
