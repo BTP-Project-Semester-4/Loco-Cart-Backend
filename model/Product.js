@@ -9,13 +9,6 @@ const productSchema = mongoose.Schema(
       trim: true,
       required: true,
     },
-    Normal_Price: {
-      type: Number,
-      required: true,
-    },
-    Bidding_Price: {
-      type: Number,
-    },
     Category: {
       type: String,
       min: 1,
@@ -23,20 +16,30 @@ const productSchema = mongoose.Schema(
       trim: true,
       required: true,
     },
-    Quantity: {
-      type: Number,
-      require: true,
-    },
-    Image: {
-      type: String,
-    },
-    Seller_ID: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Seller",
-    },
-  },
-  {
-    timestamps: true,
+    Sellers:{
+      type: Map,
+      of:{
+        SellerPrice: {
+          type: Number,
+          required: true
+        },
+        BiddingPrice: {
+          type: Number
+        },
+        SellerId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Seller"
+        },
+        Quantity: {
+          type: Number,
+          required: true
+        },
+        Image: {
+          type: String,
+          required: true
+        }
+      }
+    }
   }
 );
 
