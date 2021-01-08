@@ -14,7 +14,7 @@ sellerRouter.post(
     if (seller) {
       if (bcrypt.compareSync(req.body.password, seller.password)) {
         console.log("seller " + req.body.email + " valid password");
-        res.status(200).send({
+        res.send({
           _id: seller._id,
           firstName: seller.firstName,
           email: seller.email,
@@ -25,11 +25,11 @@ sellerRouter.post(
         return;
       } else {
         console.log("seller " + req.body.email + " invalid password");
-        res.status(401).send({ message: "Invalid email or password" });
+        res.send({ message: "Invalid email or password" });
       }
     } else {
       console.log("Invalid seller email");
-      res.status(401).send({ message: "Invalid email or password" });
+      res.send({ message: "Invalid email or password" });
     }
   })
 );
@@ -42,9 +42,7 @@ sellerRouter.post(
     const user = await Seller.findOne({ email: req.body.email });
     if (user) {
       console.log(req.body.email + " already exist");
-      return res
-        .status(400)
-        .send({ message: "Seller with this email already exists" });
+      return res.send({ message: "Seller with this email already exists" });
     } else {
       //GENERATING A 6 DIGIT OTP
       var digits = "0123456789";
@@ -98,7 +96,7 @@ sellerRouter.post(
       });
       const createSeller = await seller.save();
       console.log("seller " + createSeller.email + " created");
-      res.status(200).send({
+      res.send({
         _id: createSeller._id,
         firstName: createSeller.firstName,
         lastName: createSeller.lastName,

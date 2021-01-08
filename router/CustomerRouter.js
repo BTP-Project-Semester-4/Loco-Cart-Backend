@@ -13,105 +13,111 @@ customerRouter.post(
   "/signin",
   expressAsyncHandler(async (req, res) => {
     if (!req.body.email) {
-      return res.status(422).send({ message: "Please enter email id" });
+      return res.send({ message: "Please enter email id" });
     } else if (!req.body.password) {
-      return res.status(422).send({ message: "Please enter password" });
-    }
-    const customer = await Customer.findOne({ email: req.body.email });
-    if (customer) {
-      if (bcrypt.compareSync(req.body.password, customer.password)) {
-        console.log(req.body.email + " password valid");
-        const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET);
-        return res.status(200).send({
-          _id: customer._id,
-          firstName: customer.firstName,
-          lastName: customer.lastName,
-          isAuthenticated: customer.isAuthenticated,
-          message: "Success",
-          token: token,
-        });
-      } else {
-        console.log(req.body.email + " password not valid");
-      }
+      return res.send({ message: "Please enter password" });
     } else {
-      console.log("Invalid email");
+      const customer = await Customer.findOne({ email: req.body.email });
+      if (customer) {
+        if (bcrypt.compareSync(req.body.password, customer.password)) {
+          console.log(req.body.email + " password valid");
+          const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET);
+          return res.send({
+            _id: customer._id,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            isAuthenticated: customer.isAuthenticated,
+            message: "Success",
+            token: token,
+          });
+        } else {
+          console.log(req.body.email + " password not valid");
+          res.send({
+            message: "Invalid email or password",
+          });
+        }
+      } else {
+        console.log("Invalid email");
+        res.send({
+          message: "Invalid email or password",
+        });
+      }
     }
-    res.status(401).send({ message: "Invalid email or password" });
   })
 );
 
 customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
+    console.log(req.body.email + " requested to register");
     //CHECKING WHETHER CUSTOMER WITH GIVEN EMAIL EXISTS IN THE DATABASE OR NOT
     const user = await Customer.findOne({ email: req.body.email });
     if (user) {
-      return res
-        .status(200)
-        .send({ message: "Customer with this email already exists" });
-    }
-
-    //GENERATING A 6 DIGIT  OTP
-    var digits = "0123456789";
-    let OTP = "";
-    for (let i = 0; i < 6; i++) {
-      OTP += digits[Math.floor(Math.random() * 10)];
-    }
-
-    //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.COMPANY_EMAIL,
-        pass: process.env.COMPANY_PASSWORD,
-      },
-    });
-
-    let mailOptions = {
-      from: process.env.COMPANY_EMAIL,
-      to: req.body.email,
-      subject: "One Time Password for email verification",
-      text: `Welcome to Lococart...You are just one step away from verifying your email.
-            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-    };
-
-    transporter.sendMail(mailOptions, function (err, data) {
-      if (err) {
-        console.log("Error :", err);
-      } else {
-        console.log("OTP Email sent successfully");
+      console.log(req.body.email + " already exist");
+      return res.send({ message: "Customer with this email already exists" });
+    } else {
+      //GENERATING A 6 DIGIT  OTP
+      var digits = "0123456789";
+      let OTP = "";
+      for (let i = 0; i < 6; i++) {
+        OTP += digits[Math.floor(Math.random() * 10)];
       }
-    });
 
-    //SAVING THE NEW CUSTOMER IN THE DATABASE
-    const customer = new Customer({
-      firstName: req.body.firstName,
-      lastName: req.body.lastName,
-      email: req.body.email,
-      address: req.body.address,
-      contactNo: req.body.contactNo,
-      city: req.body.city,
-      state: req.body.state,
-      country: req.body.country,
-      password: bcrypt.hashSync(req.body.password, 8),
-      otp: OTP,
-      isAuthenticated: false,
-    });
-    const createCustomer = await customer.save();
-    console.log(req.body.email + " customer created");
-    res.status(200).send({
-      firstName: createCustomer.firstName,
-      lastName: createCustomer.lastName,
-      email: createCustomer.email,
-      contactNo: createCustomer.contactNo,
-      address: createCustomer.address,
-      city: createCustomer.city,
-      state: createCustomer.state,
-      country: createCustomer.country,
-      password: createCustomer.password,
-      profilePictureUrl: createCustomer.profilePictureUrl,
-      message: "Success",
-    });
+      //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
+      let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.COMPANY_EMAIL,
+          pass: process.env.COMPANY_PASSWORD,
+        },
+      });
+
+      let mailOptions = {
+        from: process.env.COMPANY_EMAIL,
+        to: req.body.email,
+        subject: "One Time Password for email verification",
+        text: `Welcome to Lococart...You are just one step away from verifying your email.
+            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
+      };
+
+      transporter.sendMail(mailOptions, function (err, data) {
+        if (err) {
+          console.log("Error :", err);
+        } else {
+          console.log("OTP Email sent successfully");
+        }
+      });
+
+      //SAVING THE NEW CUSTOMER IN THE DATABASE
+      const customer = new Customer({
+        firstName: req.body.firstName,
+        lastName: req.body.lastName,
+        email: req.body.email,
+        address: req.body.address,
+        contactNo: req.body.contactNo,
+        city: req.body.city,
+        state: req.body.state,
+        country: req.body.country,
+        password: bcrypt.hashSync(req.body.password, 8),
+        otp: OTP,
+        isAuthenticated: false,
+      });
+      const createCustomer = await customer.save();
+      console.log(req.body.email + " customer created");
+      res.send({
+        firstName: createCustomer.firstName,
+        lastName: createCustomer.lastName,
+        email: createCustomer.email,
+        contactNo: createCustomer.contactNo,
+        address: createCustomer.address,
+        city: createCustomer.city,
+        state: createCustomer.state,
+        country: createCustomer.country,
+        password: createCustomer.password,
+        profilePictureUrl: createCustomer.profilePictureUrl,
+        message: "Success",
+      });
+    }
   })
 );
 
