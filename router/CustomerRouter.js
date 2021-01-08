@@ -21,7 +21,9 @@ customerRouter.post(
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
         console.log(req.body.email + " password valid");
-        const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET);
+        const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
+          expiresIn: "24h",
+        });
         return res.status(200).send({
           _id: customer._id,
           firstName: customer.firstName,
