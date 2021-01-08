@@ -14,6 +14,9 @@ sellerRouter.post(
     if (seller) {
       if (bcrypt.compareSync(req.body.password, seller.password)) {
         console.log("seller " + req.body.email + " valid password");
+        const token = jwt.sign({ _id: seller._id }, process.env.JWT_SECRET, {
+          expiresIn: "24h",
+        });
         res.status(200).send({
           _id: seller._id,
           firstName: seller.firstName,
@@ -21,6 +24,7 @@ sellerRouter.post(
           city: seller.city,
           rating: seller.rating,
           message: "Success",
+          token: token,
         });
         return;
       } else {
