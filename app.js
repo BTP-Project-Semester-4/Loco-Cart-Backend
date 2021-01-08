@@ -8,8 +8,9 @@ const bodyParser = require("body-parser");
 const sellerRoute = require("./router/SellerRouter.js");
 const customerRoute = require("./router/CustomerRouter.js");
 const sellerProductRoute = require("./router/SellerProducts.js");
-const sellerPastOrderRoute = require('./router/SellerPastOrder.js');
-const customerPastOrderRouter = require('./router/CustomerPastOrder.js');
+const sellerPastOrderRoute = require("./router/SellerPastOrder.js");
+const customerPastOrderRouter = require("./router/CustomerPastOrder.js");
+const ApplicationRunning = require("./router/api.js");
 
 //DEFINING MODULES
 const app = express();
@@ -35,13 +36,12 @@ connection.once("open", () => {
 });
 
 // SENDING TO ROUTES
+app.use("/api", ApplicationRunning);
 app.use("/api/seller", sellerRoute);
 app.use("/api/customer", customerRoute);
 app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/sellerpastorder", sellerPastOrderRoute);
 app.use("/api/customerpastorder", customerPastOrderRouter);
-
-
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {

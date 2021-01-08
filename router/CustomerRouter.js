@@ -16,26 +16,22 @@ customerRouter.post(
       return res.send({ message: "Please enter email id" });
     } else if (!req.body.password) {
       return res.send({ message: "Please enter password" });
-    } else {
-      const customer = await Customer.findOne({ email: req.body.email });
-      if (customer) {
-        if (bcrypt.compareSync(req.body.password, customer.password)) {
-          console.log(req.body.email + " password valid");
-          const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET);
-          return res.send({
-            _id: customer._id,
-            firstName: customer.firstName,
-            lastName: customer.lastName,
-            isAuthenticated: customer.isAuthenticated,
-            message: "Success",
-            token: token,
-          });
-        } else {
-          console.log(req.body.email + " password not valid");
-          res.send({
-            message: "Invalid email or password",
-          });
-        }
+    }
+    const customer = await Customer.findOne({ email: req.body.email });
+    if (customer) {
+      if (bcrypt.compareSync(req.body.password, customer.password)) {
+        console.log(req.body.email + " password valid");
+        const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
+          expiresIn: "24h",
+        });
+        return res.send({
+          _id: customer._id,
+          firstName: customer.firstName,
+          lastName: customer.lastName,
+          isAuthenticated: customer.isAuthenticated,
+          message: "Success",
+          token: token,
+        });
       } else {
         console.log("Invalid email");
         res.send({
