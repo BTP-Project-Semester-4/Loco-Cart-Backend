@@ -4,7 +4,7 @@ const sellerSchema = new mongoose.Schema({
   firstName: { type: String, required: true },
   lastName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
-  contactNo: { type: String, required: true, unique: true },
+  contactNo: { type: String, required: true },
   rating: { type: Number, default: 0, required: false },
   category: { type: String, required: true },
   homeDelivery: { type: Boolean, default: 0, required: true },
