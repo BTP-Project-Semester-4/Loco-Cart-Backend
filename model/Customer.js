@@ -9,7 +9,16 @@ const customerSchema = new mongoose.Schema({
   state: { type: String, required: true },
   country: { type: String, required: true },
   password: { type: String, default: false, required: true },
-  otp:{type: String},
+  otp:{type: {
+    otpCode:{
+      type:String,
+      required:true
+    },
+    timeStamp:{
+      type: Date,
+      default: Date.now
+    }
+  }},
   isAuthenticated: {type:Boolean, default:false},
   profilePictureUrl: {
     type: String,

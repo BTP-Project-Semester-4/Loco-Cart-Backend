@@ -6,6 +6,7 @@ const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
 const env = require("dotenv");
+const middleware = require("../middleware/middleware");
 
 const customerRouter = express.Router();
 
@@ -96,7 +97,7 @@ customerRouter.post(
       state: req.body.state,
       country: req.body.country,
       password: bcrypt.hashSync(req.body.password, 8),
-      otp: OTP,
+      otp: {otpCode: OTP, timeStamp: Date.now()},
       isAuthenticated: false,
     });
     const createCustomer = await customer.save();
@@ -117,6 +118,35 @@ customerRouter.post(
   })
 );
 
+
+customerRouter.get(
+  "/customerotp",
+  middleware.isUnAuthenticated,
+  expressAsyncHandler(async (req,res)=>{
+    return res.status(200).send({message:"Access granted"});
+  })
+)
+
+customerRouter.post(
+  '/customerotp',
+  middleware.requireSignin,
+  expressAsyncHandler(async (req,res)=>{
+    console.log(req.user);
+    console.log(req.body.otp);
+    const customer = await Customer.findById(req.user._id);
+    if((req.body.timestamp-customer.otp.timeStamp)/(1000*60)>5){
+      res.status(401).send({message:"OTP Expired"});
+    }else{
+      if(req.body.otp === customer.otp.otpCode ){
+        await Customer.findByIdAndUpdate(req.user._id,{isAuthenticated:true});
+        res.status(200).send({message:"Valid OTP...User Authenticated"});
+      }else{
+        res.status(401).send({message:"Invalid OTP"});
+      }
+    }
+  })
+)
+
 customerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
@@ -135,6 +165,7 @@ customerRouter.get(
       .send({ message: "Could not find the requested resource" });
   })
 );
+
 
 customerRouter.get(
   "/getcart",
