@@ -6,6 +6,7 @@ const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
 const env = require("dotenv");
+const middleware = require("../middleware/middleware");
 
 const customerRouter = express.Router();
 
@@ -84,38 +85,66 @@ customerRouter.post(
         }
       });
 
-      //SAVING THE NEW CUSTOMER IN THE DATABASE
-      const customer = new Customer({
-        firstName: req.body.firstName,
-        lastName: req.body.lastName,
-        email: req.body.email,
-        address: req.body.address,
-        contactNo: req.body.contactNo,
-        city: req.body.city,
-        state: req.body.state,
-        country: req.body.country,
-        password: bcrypt.hashSync(req.body.password, 8),
-        otp: OTP,
-        isAuthenticated: false,
-      });
-      const createCustomer = await customer.save();
-      console.log(req.body.email + " customer created");
-      res.send({
-        firstName: createCustomer.firstName,
-        lastName: createCustomer.lastName,
-        email: createCustomer.email,
-        contactNo: createCustomer.contactNo,
-        address: createCustomer.address,
-        city: createCustomer.city,
-        state: createCustomer.state,
-        country: createCustomer.country,
-        password: createCustomer.password,
-        profilePictureUrl: createCustomer.profilePictureUrl,
-        message: "Success",
-      });
-    }
+    //SAVING THE NEW CUSTOMER IN THE DATABASE
+    const customer = new Customer({
+      firstName: req.body.firstName,
+      lastName: req.body.lastName,
+      email: req.body.email,
+      address: req.body.address,
+      contactNo: req.body.contactNo,
+      city: req.body.city,
+      state: req.body.state,
+      country: req.body.country,
+      password: bcrypt.hashSync(req.body.password, 8),
+      otp: {otpCode: OTP, timeStamp: Date.now()},
+      isAuthenticated: false,
+    });
+    const createCustomer = await customer.save();
+    console.log(req.body.email + " customer created");
+    res.status(200).send({
+      firstName: createCustomer.firstName,
+      lastName: createCustomer.lastName,
+      email: createCustomer.email,
+      contactNo: createCustomer.contactNo,
+      address: createCustomer.address,
+      city: createCustomer.city,
+      state: createCustomer.state,
+      country: createCustomer.country,
+      password: createCustomer.password,
+      profilePictureUrl: createCustomer.profilePictureUrl,
+      message: "Success",
+    });
   })
 );
+
+
+customerRouter.get(
+  "/customerotp",
+  middleware.isUnAuthenticated,
+  expressAsyncHandler(async (req,res)=>{
+    return res.status(200).send({message:"Access granted"});
+  })
+)
+
+customerRouter.post(
+  '/customerotp',
+  middleware.requireSignin,
+  expressAsyncHandler(async (req,res)=>{
+    console.log(req.user);
+    console.log(req.body.otp);
+    const customer = await Customer.findById(req.user._id);
+    if((req.body.timestamp-customer.otp.timeStamp)/(1000*60)>5){
+      res.status(401).send({message:"OTP Expired"});
+    }else{
+      if(req.body.otp === customer.otp.otpCode ){
+        await Customer.findByIdAndUpdate(req.user._id,{isAuthenticated:true});
+        res.status(200).send({message:"Valid OTP...User Authenticated"});
+      }else{
+        res.status(401).send({message:"Invalid OTP"});
+      }
+    }
+  })
+)
 
 customerRouter.get(
   "/:id",
@@ -135,6 +164,7 @@ customerRouter.get(
       .send({ message: "Could not find the requested resource" });
   })
 );
+
 
 customerRouter.get(
   "/getcart",
