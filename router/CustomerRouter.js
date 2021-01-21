@@ -168,19 +168,23 @@ customerRouter.get(
 );
 
 customerRouter.get(
-  "/getcart",
+  "/getcart/:id",
   expressAsyncHandler(async (req, res) => {
     const customerId = req.params.id;
+    console.log(req.params.id + " customer getcart");
     const myCart = await Cart.findOne({ customerId: customerId });
     if (myCart) {
-      return res.status(200).send({
+      console.log(req.params.id + " customer getcart SUCCESS");
+      return res.send({
         _id: myCart.customerId,
         itemList: myCart.itemList,
         totalPrice: myCart.totalPrice,
         timeStamp: myCart.timeStamp,
+        message: "Success",
       });
+    } else {
+      return res.status(201).send({ message: "Your Cart is empty" });
     }
-    return res.status(201).send({ message: "Your Cart is empty" });
   })
 );
 
