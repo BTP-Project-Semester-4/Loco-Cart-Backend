@@ -6,6 +6,7 @@ const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
 const env = require("dotenv");
+const middleware = require("../middleware/middleware");
 
 const customerRouter = express.Router();
 
@@ -13,9 +14,9 @@ customerRouter.post(
   "/signin",
   expressAsyncHandler(async (req, res) => {
     if (!req.body.email) {
-      return res.status(422).send({ message: "Please enter email id" });
+      return res.send({ message: "Please enter email id" });
     } else if (!req.body.password) {
-      return res.status(422).send({ message: "Please enter password" });
+      return res.send({ message: "Please enter password" });
     }
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
@@ -24,7 +25,7 @@ customerRouter.post(
         const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
           expiresIn: "24h",
         });
-        return res.status(200).send({
+        return res.send({
           _id: customer._id,
           firstName: customer.firstName,
           lastName: customer.lastName,
@@ -33,57 +34,56 @@ customerRouter.post(
           token: token,
         });
       } else {
-        console.log(req.body.email + " password not valid");
+        console.log("Invalid email");
+        res.send({
+          message: "Invalid email or password",
+        });
       }
-    } else {
-      console.log("Invalid email");
     }
-    res.status(401).send({ message: "Invalid email or password" });
   })
 );
 
 customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
+    console.log(req.body.email + " requested to register");
     //CHECKING WHETHER CUSTOMER WITH GIVEN EMAIL EXISTS IN THE DATABASE OR NOT
     const user = await Customer.findOne({ email: req.body.email });
     if (user) {
-      return res
-        .status(200)
-        .send({ message: "Customer with this email already exists" });
-    }
-
-    //GENERATING A 6 DIGIT  OTP
-    var digits = "0123456789";
-    let OTP = "";
-    for (let i = 0; i < 6; i++) {
-      OTP += digits[Math.floor(Math.random() * 10)];
-    }
-
-    //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
-    let transporter = nodemailer.createTransport({
-      service: "gmail",
-      auth: {
-        user: process.env.COMPANY_EMAIL,
-        pass: process.env.COMPANY_PASSWORD,
-      },
-    });
-
-    let mailOptions = {
-      from: process.env.COMPANY_EMAIL,
-      to: req.body.email,
-      subject: "One Time Password for email verification",
-      text: `Welcome to Lococart...You are just one step away from verifying your email.
-            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-    };
-
-    transporter.sendMail(mailOptions, function (err, data) {
-      if (err) {
-        console.log("Error :", err);
-      } else {
-        console.log("OTP Email sent successfully");
+      console.log(req.body.email + " already exist");
+      return res.send({ message: "Customer with this email already exists" });
+    } else {
+      //GENERATING A 6 DIGIT  OTP
+      var digits = "0123456789";
+      let OTP = "";
+      for (let i = 0; i < 6; i++) {
+        OTP += digits[Math.floor(Math.random() * 10)];
       }
-    });
+
+      //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
+      let transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          user: process.env.COMPANY_EMAIL,
+          pass: process.env.COMPANY_PASSWORD,
+        },
+      });
+
+      let mailOptions = {
+        from: process.env.COMPANY_EMAIL,
+        to: req.body.email,
+        subject: "One Time Password for email verification",
+        text: `Welcome to Lococart...You are just one step away from verifying your email.
+            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
+      };
+
+      transporter.sendMail(mailOptions, function (err, data) {
+        if (err) {
+          console.log("Error :", err);
+        } else {
+          console.log("OTP Email sent successfully");
+        }
+      });
 
     //SAVING THE NEW CUSTOMER IN THE DATABASE
     const customer = new Customer({
@@ -96,7 +96,7 @@ customerRouter.post(
       state: req.body.state,
       country: req.body.country,
       password: bcrypt.hashSync(req.body.password, 8),
-      otp: OTP,
+      otp: {otpCode: OTP, timeStamp: Date.now()},
       isAuthenticated: false,
     });
     const createCustomer = await customer.save();
@@ -117,6 +117,35 @@ customerRouter.post(
   })
 );
 
+
+customerRouter.get(
+  "/customerotp",
+  middleware.isUnAuthenticated,
+  expressAsyncHandler(async (req,res)=>{
+    return res.status(200).send({message:"Access granted"});
+  })
+)
+
+customerRouter.post(
+  '/customerotp',
+  middleware.requireSignin,
+  expressAsyncHandler(async (req,res)=>{
+    console.log(req.user);
+    console.log(req.body.otp);
+    const customer = await Customer.findById(req.user._id);
+    if((req.body.timestamp-customer.otp.timeStamp)/(1000*60)>5){
+      res.status(401).send({message:"OTP Expired"});
+    }else{
+      if(req.body.otp === customer.otp.otpCode ){
+        await Customer.findByIdAndUpdate(req.user._id,{isAuthenticated:true});
+        res.status(200).send({message:"Valid OTP...User Authenticated"});
+      }else{
+        res.status(401).send({message:"Invalid OTP"});
+      }
+    }
+  })
+)
+
 customerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
@@ -135,6 +164,7 @@ customerRouter.get(
       .send({ message: "Could not find the requested resource" });
   })
 );
+
 
 customerRouter.get(
   "/getcart",
