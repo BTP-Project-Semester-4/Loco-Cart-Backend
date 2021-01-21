@@ -5,6 +5,8 @@ const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
 const env = require("dotenv");
 const sellerRouter = express.Router();
+const middleware = require("../middleware/middleware");
+const jwt = require("jsonwebtoken");
 
 sellerRouter.post(
   "/signin",
@@ -95,7 +97,7 @@ sellerRouter.post(
         state: req.body.state,
         country: req.body.country,
         profilePictureUrl: req.body.profilePictureUrl,
-        otp: OTP,
+        otp: {otpCode: OTP, timeStamp: Date.now()},
         isAuthenticated: false,
       });
       const createSeller = await seller.save();
@@ -121,6 +123,36 @@ sellerRouter.post(
     }
   })
 );
+
+
+sellerRouter.get(
+  "/sellerotp",
+  middleware.isUnAuthenticatedSeller,
+  expressAsyncHandler(async (req,res)=>{
+    return res.status(200).send({message:"Access granted"});
+  })
+)
+
+sellerRouter.post(
+  '/sellerotp',
+  middleware.requireSignin,
+  expressAsyncHandler(async (req,res)=>{
+    console.log(req.user);
+    console.log(req.body.otp);
+    const seller = await Seller.findById(req.user._id);
+    if((req.body.timestamp-seller.otp.timeStamp)/(1000*60)>5){
+      res.status(401).send({message:"OTP Expired"});
+    }else{
+      if(req.body.otp === seller.otp.otpCode ){
+        await Seller.findByIdAndUpdate(req.user._id,{isAuthenticated:true});
+        res.status(200).send({message:"Valid OTP...User Authenticated"});
+      }else{
+        res.status(401).send({message:"Invalid OTP"});
+      }
+    }
+  })
+)
+
 
 sellerRouter.get(
   "/:id",
