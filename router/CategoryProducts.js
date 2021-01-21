@@ -1,9 +1,9 @@
 const express = require("express");
 const Product = require("../model/Product.js");
 const env = require("dotenv");
-const CategoryProductRouter = express.Router();
+const categoryProductRouter = express.Router();
 
-CategoryProductRouter.get("/:id", (req, res) => {
+categoryProductRouter.get("/:id", (req, res) => {
   const category = req.params.id;
   Product.find({ Category: category }).exec((err, products) => {
     if (err) {
@@ -13,4 +13,4 @@ CategoryProductRouter.get("/:id", (req, res) => {
   });
 });
 
-module.exports = CategoryProductRouter;
+module.exports = categoryProductRouter;
