@@ -10,6 +10,7 @@ const customerRoute = require("./router/CustomerRouter.js");
 const sellerProductRoute = require("./router/SellerProducts.js");
 const sellerPastOrderRoute = require("./router/SellerPastOrder.js");
 const customerPastOrderRouter = require("./router/CustomerPastOrder.js");
+const CategoryProductRouter = require("./router/CategoryProducts.js");
 const ApplicationRunning = require("./router/api.js");
 
 //DEFINING MODULES
@@ -42,6 +43,7 @@ app.use("/api/customer", customerRoute);
 app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/sellerpastorder", sellerPastOrderRoute);
 app.use("/api/customerpastorder", customerPastOrderRouter);
+app.use("/api/categoryproducts", CategoryProductRouter);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
