@@ -5,6 +5,7 @@ const Customer = require("../model/Customer.js");
 const Cart = require("../model/Cart.js");
 const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
+const sendgridTransport = require("nodemailer-sendgrid-transport");
 const env = require("dotenv");
 const middleware = require("../middleware/middleware");
 
@@ -60,29 +61,20 @@ customerRouter.post(
         OTP += digits[Math.floor(Math.random() * 10)];
       }
 
-      //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
-      let transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          user: process.env.COMPANY_EMAIL,
-          pass: process.env.COMPANY_PASSWORD,
-        },
-      });
+      const transporter = nodemailer.createTransport(
+        sendgridTransport({
+          auth: {
+            api_key: process.env.SEND_GRID,
+          },
+        })
+      );
 
-      let mailOptions = {
-        from: process.env.COMPANY_EMAIL,
+      transporter.sendMail({
         to: req.body.email,
-        subject: "One Time Password for email verification",
-        text: `Welcome to Lococart...You are just one step away from verifying your email.
-            Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-      };
-
-      transporter.sendMail(mailOptions, function (err, data) {
-        if (err) {
-          console.log("Error :", err);
-        } else {
-          console.log("OTP Email sent successfully");
-        }
+        from: process.env.COMPANY_EMAIL,
+        subject: "VERIFY LOCO-CART OTP",
+        html: `Welcome to Lococart...You are just one step away from verifying your email.
+          //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
       });
 
       //SAVING THE NEW CUSTOMER IN THE DATABASE
