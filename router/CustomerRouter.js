@@ -22,6 +22,29 @@ customerRouter.post(
     const customer = await Customer.findOne({ email: req.body.email });
     if (customer) {
       if (bcrypt.compareSync(req.body.password, customer.password)) {
+        //GENERATING A 6 DIGIT  OTP
+        var digits = "0123456789";
+        let OTP = "";
+        for (let i = 0; i < 6; i++) {
+          OTP += digits[Math.floor(Math.random() * 10)];
+        }
+
+        const transporter = nodemailer.createTransport(
+          sendgridTransport({
+            auth: {
+              api_key: process.env.SEND_GRID,
+            },
+          })
+        );
+
+        transporter.sendMail({
+          to: req.body.email,
+          from: process.env.COMPANY_EMAIL,
+          subject: "VERIFY LOCO-CART OTP",
+          html: `Welcome to Lococart...You are just one step away from verifying your email.
+          //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
+        });
+
         console.log(req.body.email + " password valid");
         const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
           expiresIn: "24h",
@@ -61,21 +84,21 @@ customerRouter.post(
         OTP += digits[Math.floor(Math.random() * 10)];
       }
 
-      const transporter = nodemailer.createTransport(
-        sendgridTransport({
-          auth: {
-            api_key: process.env.SEND_GRID,
-          },
-        })
-      );
+      // const transporter = nodemailer.createTransport(
+      //   sendgridTransport({
+      //     auth: {
+      //       api_key: process.env.SEND_GRID,
+      //     },
+      //   })
+      // );
 
-      transporter.sendMail({
-        to: req.body.email,
-        from: process.env.COMPANY_EMAIL,
-        subject: "VERIFY LOCO-CART OTP",
-        html: `Welcome to Lococart...You are just one step away from verifying your email.
-          //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-      });
+      // transporter.sendMail({
+      //   to: req.body.email,
+      //   from: process.env.COMPANY_EMAIL,
+      //   subject: "VERIFY LOCO-CART OTP",
+      //   html: `Welcome to Lococart...You are just one step away from verifying your email.
+      //     //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
+      // });
 
       //SAVING THE NEW CUSTOMER IN THE DATABASE
       const customer = new Customer({
@@ -144,13 +167,13 @@ customerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
     const customerId = req.params.id;
-    try{
+    try {
       const customer = await Customer.findOne({ _id: customerId });
       if (customer) {
         //ratings/reviews to be sent once they are added to customer schema
         return res.status(200).send({
-          message:"Success",
-          customer:{
+          message: "Success",
+          customer: {
             _id: customer._id,
             firstName: customer.firstName,
             lastName: customer.lastName,
@@ -159,18 +182,19 @@ customerRouter.get(
             city: customer.city,
             state: customer.state,
             country: customer.country,
-            contactNo: customer.contactNo
-          }
+            contactNo: customer.contactNo,
+          },
         });
       }
       return res
         .status(400)
         .send({ message: "Could not find the requested resource" });
-    }catch(err){
-      return res.status(500).send({message:"Internal server error",error:err});
+    } catch (err) {
+      return res
+        .status(500)
+        .send({ message: "Internal server error", error: err });
     }
   })
-  
 );
 
 customerRouter.get(
