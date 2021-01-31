@@ -144,19 +144,33 @@ customerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
     const customerId = req.params.id;
-    const customer = await Customer.findOne({ _id: customerId });
-    if (customer) {
-      //ratings/reviews to be sent once they are added to customer schema
-      return res.status(200).send({
-        _id: customer._id,
-        name: customer.firstName,
-        profilePictureUrl: customerId.profilePictureUrl,
-      });
+    try{
+      const customer = await Customer.findOne({ _id: customerId });
+      if (customer) {
+        //ratings/reviews to be sent once they are added to customer schema
+        return res.status(200).send({
+          message:"Success",
+          customer:{
+            _id: customer._id,
+            firstName: customer.firstName,
+            lastName: customer.lastName,
+            profilePictureUrl: customer.profilePictureUrl,
+            email: customer.email,
+            city: customer.city,
+            state: customer.state,
+            country: customer.country,
+            contactNo: customer.contactNo
+          }
+        });
+      }
+      return res
+        .status(400)
+        .send({ message: "Could not find the requested resource" });
+    }catch(err){
+      return res.status(500).send({message:"Internal server error",error:err});
     }
-    return res
-      .status(400)
-      .send({ message: "Could not find the requested resource" });
   })
+  
 );
 
 customerRouter.get(
