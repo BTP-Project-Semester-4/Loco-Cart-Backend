@@ -158,9 +158,12 @@ sellerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
     const sellerId = req.params.id;
+    try{
     const seller = await Seller.findOne({ _id: sellerId });
     if (seller) {
       return res.status(200).send({
+        message:"Success",
+        seller:{
         _id: seller._id,
         firstName: seller.firstName,
         lastName: seller.lastName,
@@ -172,11 +175,19 @@ sellerRouter.get(
         state: seller.state,
         country: seller.country,
         profilePictureUrl: seller.profilePictureUrl,
+        email: seller.email,
+        phoneNo: seller.contactNo
+        }
       });
     }
     return res
       .status(400)
       .send({ message: "Could not find the requested resource" });
+  }catch(err){
+    return res
+      .status(400)
+      .send({ message: "Could not find the requested resource" });
+  }
   })
 );
 
