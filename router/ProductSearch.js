@@ -24,4 +24,13 @@ productSearch.post("/searchbyid", (req, res) => {
   });
 });
 
+productSearch.post("/allproducts", (req, res) => {
+  Product.find({}).exec((err, products) => {
+    if (err) {
+      return res.status(422).json({ error: err });
+    }
+    return res.json({ products });
+  });
+});
+
 module.exports = productSearch;
