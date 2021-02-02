@@ -14,4 +14,14 @@ productSearch.post("/search", (req, res) => {
   });
 });
 
+productSearch.post("/searchbyid", (req, res) => {
+  const productId = req.body.id;
+  Product.findOne({ _id: productId }).exec((err, products) => {
+    if (err) {
+      return res.status(422).json({ error: err });
+    }
+    return res.json({ products });
+  });
+});
+
 module.exports = productSearch;

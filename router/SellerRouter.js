@@ -97,7 +97,7 @@ sellerRouter.post(
         state: req.body.state,
         country: req.body.country,
         profilePictureUrl: req.body.profilePictureUrl,
-        otp: {otpCode: OTP, timeStamp: Date.now()},
+        otp: { otpCode: OTP, timeStamp: Date.now() },
         isAuthenticated: false,
       });
       const createSeller = await seller.save();
@@ -124,70 +124,54 @@ sellerRouter.post(
   })
 );
 
-
 sellerRouter.get(
   "/sellerotp",
   middleware.isUnAuthenticatedSeller,
-  expressAsyncHandler(async (req,res)=>{
-    return res.status(200).send({message:"Access granted"});
+  expressAsyncHandler(async (req, res) => {
+    return res.status(200).send({ message: "Access granted" });
   })
-)
+);
 
 sellerRouter.post(
-  '/sellerotp',
+  "/sellerotp",
   middleware.requireSignin,
-  expressAsyncHandler(async (req,res)=>{
+  expressAsyncHandler(async (req, res) => {
     console.log(req.user);
     console.log(req.body.otp);
     const seller = await Seller.findById(req.user._id);
-    if((req.body.timestamp-seller.otp.timeStamp)/(1000*60)>5){
-      res.status(401).send({message:"OTP Expired"});
-    }else{
-      if(req.body.otp === seller.otp.otpCode ){
-        await Seller.findByIdAndUpdate(req.user._id,{isAuthenticated:true});
-        res.status(200).send({message:"Valid OTP...User Authenticated"});
-      }else{
-        res.status(401).send({message:"Invalid OTP"});
+    if ((req.body.timestamp - seller.otp.timeStamp) / (1000 * 60) > 5) {
+      res.status(401).send({ message: "OTP Expired" });
+    } else {
+      if (req.body.otp === seller.otp.otpCode) {
+        await Seller.findByIdAndUpdate(req.user._id, { isAuthenticated: true });
+        res.status(200).send({ message: "Valid OTP...User Authenticated" });
+      } else {
+        res.status(401).send({ message: "Invalid OTP" });
       }
     }
   })
-)
-
+);
 
 sellerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
     const sellerId = req.params.id;
-    try{
-    const seller = await Seller.findOne({ _id: sellerId });
-    if (seller) {
-      return res.status(200).send({
-        message:"Success",
-        seller:{
-        _id: seller._id,
-        firstName: seller.firstName,
-        lastName: seller.lastName,
-        category: seller.category,
-        rating: seller.rating,
-        homeDelivery: seller.homeDelivery,
-        address: seller.address,
-        city: seller.city,
-        state: seller.state,
-        country: seller.country,
-        profilePictureUrl: seller.profilePictureUrl,
-        email: seller.email,
-        phoneNo: seller.contactNo
-        }
-      });
+    try {
+      const seller = await Seller.findOne({ _id: sellerId });
+      if (seller) {
+        return res.status(200).send({
+          message: "Success",
+          seller: seller,
+        });
+      }
+      return res
+        .status(400)
+        .send({ message: "Could not find the requested resource" });
+    } catch (err) {
+      return res
+        .status(400)
+        .send({ message: "Could not find the requested resource" });
     }
-    return res
-      .status(400)
-      .send({ message: "Could not find the requested resource" });
-  }catch(err){
-    return res
-      .status(400)
-      .send({ message: "Could not find the requested resource" });
-  }
   })
 );
 
