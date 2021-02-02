@@ -20,34 +20,52 @@ customerRouter.post(
       return res.send({ message: "Please enter password" });
     }
     const customer = await Customer.findOne({ email: req.body.email });
+    console.log(req.body.email + " requested to signin");
     if (customer) {
+      console.log(req.body.email + " signin found in database");
       if (bcrypt.compareSync(req.body.password, customer.password)) {
-        //GENERATING A 6 DIGIT  OTP
-        var digits = "0123456789";
-        let OTP = "";
-        for (let i = 0; i < 6; i++) {
-          OTP += digits[Math.floor(Math.random() * 10)];
+        if (!customer.isAuthenticated) {
+          console.log(req.body.email + " password valid");
+          //GENERATING A 6 DIGIT  OTP
+          var digits = "0123456789";
+          let OTP = "";
+          for (let i = 0; i < 6; i++) {
+            OTP += digits[Math.floor(Math.random() * 10)];
+          }
+
+          const transporter = nodemailer.createTransport(
+            sendgridTransport({
+              auth: {
+                api_key: process.env.SEND_GRID,
+              },
+            })
+          );
+
+          transporter.sendMail({
+            to: req.body.email,
+            from: process.env.COMPANY_EMAIL,
+            subject: "VERIFY LOCO-CART OTP",
+            html: `<h1>Welcome to Lococart...</h1>
+          <i>You are just one step away from verifying your email.</i><br/>
+          Your OTP is:  <h2>${OTP}</h2>. <br/>Just Enter this OTP on the email verification screen`,
+          });
+
+          const updateOtp = await Customer.findOneAndUpdate(
+            { _id: customer._id },
+            { otp: { otpCode: OTP, timeStamp: Date.now() } },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log(
+                  req.body.email + " OTP updation success with OTP: " + OTP
+                );
+              }
+            }
+          );
         }
-
-        const transporter = nodemailer.createTransport(
-          sendgridTransport({
-            auth: {
-              api_key: process.env.SEND_GRID,
-            },
-          })
-        );
-
-        transporter.sendMail({
-          to: req.body.email,
-          from: process.env.COMPANY_EMAIL,
-          subject: "VERIFY LOCO-CART OTP",
-          html: `Welcome to Lococart...You are just one step away from verifying your email.
-          //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-        });
-
-        console.log(req.body.email + " password valid");
         const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
-          expiresIn: "24h",
+          expiresIn: "28d",
         });
         return res.send({
           _id: customer._id,
@@ -58,11 +76,16 @@ customerRouter.post(
           token: token,
         });
       } else {
-        console.log("Invalid email");
+        console.log("Invalid password");
         res.send({
           message: "Invalid email or password",
         });
       }
+    } else {
+      console.log("Invalid email");
+      res.send({
+        message: "Invalid email or password",
+      });
     }
   })
 );
@@ -84,21 +107,21 @@ customerRouter.post(
         OTP += digits[Math.floor(Math.random() * 10)];
       }
 
-      // const transporter = nodemailer.createTransport(
-      //   sendgridTransport({
-      //     auth: {
-      //       api_key: process.env.SEND_GRID,
-      //     },
-      //   })
-      // );
+      const transporter = nodemailer.createTransport(
+        sendgridTransport({
+          auth: {
+            api_key: process.env.SEND_GRID,
+          },
+        })
+      );
 
-      // transporter.sendMail({
-      //   to: req.body.email,
-      //   from: process.env.COMPANY_EMAIL,
-      //   subject: "VERIFY LOCO-CART OTP",
-      //   html: `Welcome to Lococart...You are just one step away from verifying your email.
-      //     //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-      // });
+      transporter.sendMail({
+        to: req.body.email,
+        from: process.env.COMPANY_EMAIL,
+        subject: "VERIFY LOCO-CART OTP",
+        html: `<h1>Welcome to Lococart...</h1>You are just one step away from verifying your email.
+          //       Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
+      });
 
       //SAVING THE NEW CUSTOMER IN THE DATABASE
       const customer = new Customer({
@@ -155,7 +178,10 @@ customerRouter.post(
         await Customer.findByIdAndUpdate(req.user._id, {
           isAuthenticated: true,
         });
-        res.status(200).send({ message: "Valid OTP...User Authenticated" });
+        res.status(200).send({
+          message: "Valid OTP...User Authenticated",
+          token: customer.token,
+        });
       } else {
         res.status(401).send({ message: "Invalid OTP" });
       }
