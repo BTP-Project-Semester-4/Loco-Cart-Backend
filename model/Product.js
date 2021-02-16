@@ -26,9 +26,6 @@ const productSchema = mongoose.Schema({
         type: String,
         required: true,
       },
-      BiddingPrice: {
-        type: Number,
-      },
       SellerId: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "Seller",
