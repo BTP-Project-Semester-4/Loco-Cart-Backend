@@ -73,7 +73,7 @@ customerRouter.post(
           lastName: customer.lastName,
           isAuthenticated: customer.isAuthenticated,
           message: "Success",
-          token: token,
+          CustomerToken: token,
         });
       } else {
         console.log("Invalid password");
