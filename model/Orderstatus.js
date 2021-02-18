@@ -1,31 +1,36 @@
-const Order = require("./orderstatu");
-const Cart=require("./Cart");
-
-exports.addOrder = (req, res) => {
-    Cart.deleteOne({customer:req.customerId}).exec((error, result) => {
-      if (error) return res.status(400).json({ error });
-      if (result) {
-        req.body.customer = req.customerId;
-        req.body.orderStatus = [
-          {
-            type: "ordered",
-            date: new Date(),
-            isCompleted: true,
-          },
-          {
-            type: "packed",
-            isCompleted: false,
-          },
-          {
-            type: "shipped",
-            isCompleted: false,
-          },
-          {
-            type: "delivered",
-            isCompleted: false,
-          },
-        ];
-      }
-    });
-  };
-  
+const mongoose = require("mongoose");
+const orderSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    items: [
+      {
+        productId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "Product",
+        },
+      },
+    ],
+    orderStatus: [
+      {
+        type: {
+          type: String,
+          enum: ["ordered", "packed", "shipped", "delivered"],
+          default: "ordered",
+        },
+        date: {
+            type: Date,
+        },
+        isCompleted: {
+          type: Boolean,
+          default: false,
+        },
+      },
+    ],
+  },
+  { timestamps: true }
+);
+module.exports = mongoose.model("Order", orderSchema);
