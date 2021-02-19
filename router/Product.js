@@ -7,6 +7,7 @@ const expressAsyncHandler = require("express-async-handler");
 product.post(
   "/addproduct",
   expressAsyncHandler(async (req,res)=>{
+    console.log(req.body);
     const productName = req.body.productName;
     const productCategory = req.body.productCategory;
     const sellerPrice = req.body.sellerPrice;
@@ -19,39 +20,46 @@ product.post(
 
     if(product){
       const sellerMap = product.Sellers;
+      console.log(sellerMap)
       if(sellerMap.has(sellerId)){
-        const previousQuantity = sellerMap[sellerId].Quantity;
-        sellerMap[sellerId] = {
+        const previousQuantity = sellerMap.get(sellerId).Quantity;
+        sellerMap.set(sellerId, {
           SellerPrice: sellerPrice,
           Description: sellerDescription,
           SellerId: sellerId,
-          Quantity: previousQuantity + sellerQuantity,
-          Image: sellerImage
-        };
+          Quantity: Number(previousQuantity) + Number(sellerQuantity),
+          Image: sellerImage,
+          Rating: sellerMap.get(sellerId).Rating,
+          comments: sellerMap.get(sellerId).comments,
+        });
       }else{
-        sellerMap[sellerId] = {
+        sellerMap.set(sellerId,{
           SellerPrice: sellerPrice,
           Description: sellerDescription,
           SellerId: sellerId,
           Quantity: sellerQuantity,
-          Image: sellerImage
-        };
+          Image: sellerImage,
+          Rating: 0,
+          comments: [],
+        });
       }
       const updatedProduct = await Product.updateOne({Name: productName},{
         $set:{
           Sellers: sellerMap
         }
       });
-      return res.status(200).send({product: updatedProduct});
+      return res.status(200).send({message: "Success", product: updatedProduct});
     }else{
       const sellerMap = new Map();
-      sellerMap[sellerId] = {
+      sellerMap.set(sellerId,{
         SellerPrice: sellerPrice,
         Description: sellerDescription,
         SellerId: sellerId,
         Quantity: sellerQuantity,
-        Image: sellerImage
-      };
+        Image: sellerImage,
+        Rating: 0,
+        comments: [],
+      });
 
       const newProduct = new Product({
         Name: productName,
@@ -59,9 +67,9 @@ product.post(
         Sellers: sellerMap
       });
 
-      const createdProduct = await Product.save();
+      const createdProduct = await newProduct.save();
 
-      return res.status(200).send({product: createdProduct});
+      return res.status(200).send({message: "Success", product: createdProduct});
     }
   })
 )
