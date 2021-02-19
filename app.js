@@ -13,7 +13,7 @@ const customerPastOrderRouter = require("./router/CustomerPastOrder.js");
 const categoryProductRouter = require("./router/CategoryProducts.js");
 const productRouter = require("./router/Product.js");
 const applicationRunning = require("./router/api.js");
-
+const reviewAndComments = require("./router/ReviewAndComments.js");
 //DEFINING MODULES
 const app = express();
 const port = 3001 || process.env.PORT;
@@ -45,7 +45,8 @@ app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/sellerpastorder", sellerPastOrderRoute);
 app.use("/api/customerpastorder", customerPastOrderRouter);
 app.use("/api/categoryproducts", categoryProductRouter);
-app.use("/api/product", productRouter);
+app.use("/api/product", productSearch);
+app.use("/api/reviewandcomment", reviewAndComments);
 
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {

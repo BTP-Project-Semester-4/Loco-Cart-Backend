@@ -38,6 +38,26 @@ const productSchema = mongoose.Schema({
         type: String,
         required: true,
       },
+      Rating: {
+        type: mongoose.Decimal128,
+        default: 0,
+      },
+      Comments: [
+        {
+          Name: {
+            type: String,
+          },
+          Rating: {
+            type: mongoose.Decimal128,
+          },
+          Content: {
+            type: String,
+          },
+          UserId: {
+            type: mongoose.Schema.Types.ObjectId,
+          },
+        },
+      ],
     },
   },
 });
