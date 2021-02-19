@@ -11,7 +11,7 @@ const sellerProductRoute = require("./router/SellerProducts.js");
 const sellerPastOrderRoute = require("./router/SellerPastOrder.js");
 const customerPastOrderRouter = require("./router/CustomerPastOrder.js");
 const categoryProductRouter = require("./router/CategoryProducts.js");
-const productSearch = require("./router/ProductSearch.js");
+const product = require("./router/Product.js");
 const applicationRunning = require("./router/api.js");
 const reviewAndComments = require("./router/ReviewAndComments.js");
 //DEFINING MODULES
@@ -45,7 +45,7 @@ app.use("/api/seller_product", sellerProductRoute);
 app.use("/api/sellerpastorder", sellerPastOrderRoute);
 app.use("/api/customerpastorder", customerPastOrderRouter);
 app.use("/api/categoryproducts", categoryProductRouter);
-app.use("/api/product", productSearch);
+app.use("/api/product", product);
 app.use("/api/reviewandcomment", reviewAndComments);
 
 //STARTING APP
