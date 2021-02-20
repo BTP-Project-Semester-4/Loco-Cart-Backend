@@ -23,7 +23,6 @@ sellerProductRouter.get(
           sellerSpecificDetails: {
             _id: sellerProductDetails._id,
             SellerPrice: sellerProductDetails.SellerPrice,
-            BiddingPrice: sellerProductDetails.BiddingPrice,
             Quantity: sellerProductDetails.Quantity,
             Image: sellerProductDetails.Image
           }
