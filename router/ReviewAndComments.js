@@ -12,22 +12,24 @@ reviewAndComments.post(
     const rating = req.body.rating;
     const comment = req.body.comment;
     const reviewerId = req.body.userId;
-    console.log(req.params.id);
+    // console.log(req.params.id);
     try {
       const product = await Product.findById(productId).exec(
         async (err, productDetails) => {
           if (productDetails) {
-            console.log("productDetails");
+            // console.log("productDetails");
             const sellerMap = productDetails.Sellers;
-            console.log(sellerMap);
+            // console.log(sellerMap);
             if (sellerMap.has(id)) {
-              console.log("SellerMap");
+              // console.log("SellerMap");
               const sellerDetails = sellerMap.get(id);
-              console.log("SellerDetails");
-              sellerDetails.Rating =
+              // console.log("SellerDetails");
+              sellerDetails.Rating = parseFloat(
                 (rating +
                   sellerDetails.Rating * sellerDetails.Comments.length) /
-                (sellerDetails.Comments.length + 1);
+                  (sellerDetails.Comments.length + 1)
+              ).toFixed(2);
+              console.log("here " + sellerDetails.Rating);
               sellerDetails.Comments.push({
                 Name: reviewerName,
                 Rating: rating,
