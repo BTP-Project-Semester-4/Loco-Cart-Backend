@@ -15,7 +15,6 @@ const product = require("./router/Product.js");
 const applicationRunning = require("./router/api.js");
 const reviewAndComments = require("./router/ReviewAndComments.js");
 const feedbackRouter = require("./router/Feedbacks.js");
-const BiddingRouter = require('./router/BiddingRouter');
 const biddingRouter = require("./router/BiddingRouter");
 //DEFINING MODULES
 const app = express();
