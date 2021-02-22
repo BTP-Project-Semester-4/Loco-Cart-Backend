@@ -1,10 +1,74 @@
 const express = require('express');
 const Bid = require('../model/Bid');
 const Customer = require('../model/Customer');
+const Product = require('../model/Product');
+const Seller = require('../model/Seller');
 const expressAsyncHandler = require("express-async-handler");
 const biddingRouter = express.Router();
 const nodemailer = require("nodemailer");
+const _ = require('lodash');
 const env = require("dotenv").config();
+
+biddingRouter.post(
+    '/getinitialbestseller',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const itemList = req.body.itemList;
+            const city = req.body.city;
+            const sellers = await Seller.find({city: city});
+            var sellerList = [];
+            var priceMap = new Map();
+             sellers.forEach(seller=>{
+                sellerList.push(seller._id.toString());
+                priceMap.set(seller._id.toString(),0);
+            })
+            for(var i=0;i<itemList.length;i++){
+                const item = itemList[i];
+                const product = await Product.findById(item.itemId);
+                const sellerMap = product.Sellers;
+                var eligibleSellers = [];
+                sellerList.forEach(seller=>{
+                    if(sellerMap.has(seller)){
+                        if(sellerMap.get(seller).Quantity >= item.quantity){
+                            eligibleSellers.push(seller);
+                            priceMap.set(seller,priceMap.get(seller)+Number(item.quantity)*Number(sellerMap.get(seller).SellerPrice));
+                        }
+                    }
+                });
+                console.log("1",eligibleSellers)
+                sellerList = _.intersection(sellerList,eligibleSellers);
+                console.log("2",sellerList)
+            }
+            console.log(priceMap)
+            var minPrice=Number.MAX_SAFE_INTEGER,minSeller=undefined;
+            for(var i=0;i<sellerList.length;i++){
+                if(priceMap.get(sellerList[i])<minPrice){
+                    minPrice=priceMap.get(sellerList[i]);
+                    minSeller=sellerList[i];
+                }
+            }
+            if(minSeller!==undefined){
+                const sellerDetails = await Seller.findById(minSeller);
+                return res.status(200).send({
+                    message: "Success",
+                    minPrice: minPrice,
+                    seller: {
+                        firstName: sellerDetails.firstName,
+                        lastName: sellerDetails.lastName,
+                        address: sellerDetails.address,
+                        city: sellerDetails.city,
+                        interest: sellerDetails.category
+                    }
+                })
+            }else{
+                return res.status(404).send({message: "Could not find te requested resource"});
+            }
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+)
 
 biddingRouter.post(
     "/getotp",
@@ -83,5 +147,37 @@ biddingRouter.post(
         }
     })
 );
+
+biddingRouter.get(
+    '/getactivebids',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const city = req.body.city;
+            var bids = await Bid.find({city:city});
+            bids = bids.filter(bid=>(Date.now()-bid.orderedAt)/(1000*60)<180)
+            return res.status(200).send({message: "Success",bids: bids});
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+)
+
+biddingRouter.get(
+    '/:id',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const bid = await Bid.findById(req.params.id);
+            if(bid){
+                return res.status(200).send({message:"Success",bid: bid});
+            }else{
+                return res.status(404).send({message:"Could not find the requested resource"});
+            }
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+)
 
 module.exports = biddingRouter;
