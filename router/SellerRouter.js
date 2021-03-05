@@ -5,6 +5,7 @@ const expressAsyncHandler = require("express-async-handler");
 const nodemailer = require("nodemailer");
 const env = require("dotenv");
 const sellerRouter = express.Router();
+const sendgridTransport = require("nodemailer-sendgrid-transport");
 const middleware = require("../middleware/middleware");
 const jwt = require("jsonwebtoken");
 
@@ -16,8 +17,48 @@ sellerRouter.post(
     if (seller) {
       if (bcrypt.compareSync(req.body.password, seller.password)) {
         console.log("seller " + req.body.email + " valid password");
+        if (!seller.isAuthenticated) {
+          console.log(req.body.email + " password valid");
+          //GENERATING A 6 DIGIT  OTP
+          var digits = "0123456789";
+          let OTP = "";
+          for (let i = 0; i < 6; i++) {
+            OTP += digits[Math.floor(Math.random() * 10)];
+          }
+
+          const transporter = nodemailer.createTransport(
+            sendgridTransport({
+              auth: {
+                api_key: process.env.SEND_GRID,
+              },
+            })
+          );
+
+          transporter.sendMail({
+            to: req.body.email,
+            from: process.env.COMPANY_EMAIL,
+            subject: "VERIFY LOCO-CART OTP",
+            html: `<h1>Welcome to Lococart...</h1>
+          <i>You are just one step away from verifying your email.</i><br/>
+          Your OTP is:  <h2>${OTP}</h2>. <br/>Just Enter this OTP on the email verification screen`,
+          });
+
+          const updateOtp = await Seller.findOneAndUpdate(
+            { _id: seller._id },
+            { otp: { otpCode: OTP, timeStamp: Date.now() } },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+              } else {
+                console.log(
+                  req.body.email + " OTP updation success with OTP: " + OTP
+                );
+              }
+            }
+          );
+        }
         const token = jwt.sign({ _id: seller._id }, process.env.JWT_SECRET, {
-          expiresIn: "24h",
+          expiresIn: "28d",
         });
         res.send({
           _id: seller._id,
@@ -124,26 +165,26 @@ sellerRouter.post(
   })
 );
 
-sellerRouter.get(
-  "/sellerotp",
-  middleware.isUnAuthenticatedSeller,
+sellerRouter.post(
+  "/verifysellertype",
   expressAsyncHandler(async (req, res) => {
-    return res.status(200).send({ message: "Access granted" });
+    const seller = await Seller.findById(req.body.id);
+    return res.status(200).send({ isverified: seller.isAuthenticated });
   })
 );
 
 sellerRouter.post(
   "/sellerotp",
-  middleware.requireSignin,
   expressAsyncHandler(async (req, res) => {
-    console.log(req.user);
     console.log(req.body.otp);
-    const seller = await Seller.findById(req.user._id);
+    const seller = await Seller.findById(req.body.sellerId);
     if ((req.body.timestamp - seller.otp.timeStamp) / (1000 * 60) > 5) {
       res.status(401).send({ message: "OTP Expired" });
     } else {
       if (req.body.otp === seller.otp.otpCode) {
-        await Seller.findByIdAndUpdate(req.user._id, { isAuthenticated: true });
+        await Seller.findByIdAndUpdate(req.body.sellerId, {
+          isAuthenticated: true,
+        });
         res.status(200).send({ message: "Valid OTP...User Authenticated" });
       } else {
         res.status(401).send({ message: "Invalid OTP" });
