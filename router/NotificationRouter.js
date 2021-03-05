@@ -1,7 +1,8 @@
 const express = require("express");
 const Notification = require("../model/Notification");
-const notificationRouter = express.Router();
 const expressAsyncHandler = require("express-async-handler");
+
+const notificationRouter = express.Router();
 
 notificationRouter.post(
   "/",
@@ -11,6 +12,7 @@ notificationRouter.post(
     const link = req.body.link;
     const image = req.body.image;
     const receiverId = req.body.receiverId;
+
     const notification = await Notification.findOne({ userId: receiverId });
     if (notification) {
       notification.notifications.push({
