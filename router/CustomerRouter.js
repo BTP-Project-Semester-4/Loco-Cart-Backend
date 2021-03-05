@@ -156,26 +156,24 @@ customerRouter.post(
   })
 );
 
-customerRouter.get(
-  "/customerotp",
-  middleware.isUnAuthenticated,
+customerRouter.post(
+  "/verifycustomertype",
   expressAsyncHandler(async (req, res) => {
-    return res.status(200).send({ message: "Access granted" });
+    const customer = await Customer.findById(req.body.id);
+    return res.status(200).send({isverified : customer.isAuthenticated});
   })
 );
 
 customerRouter.post(
   "/customerotp",
-  middleware.requireSignin,
   expressAsyncHandler(async (req, res) => {
-    console.log(req.user);
     console.log(req.body.otp);
-    const customer = await Customer.findById(req.user._id);
+    const customer = await Customer.findById(req.body.id);
     if ((req.body.timestamp - customer.otp.timeStamp) / (1000 * 60) > 5) {
       res.status(401).send({ message: "OTP Expired" });
     } else {
       if (req.body.otp === customer.otp.otpCode) {
-        await Customer.findByIdAndUpdate(req.user._id, {
+        await Customer.findByIdAndUpdate(req.body.id, {
           isAuthenticated: true,
         });
         res.status(200).send({
