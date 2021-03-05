@@ -60,7 +60,7 @@ notificationRouter.get(
       if (notification) {
         res.send({
           notification,
-          message: "Suucess",
+          message: "Success",
         });
       } else {
         res.send({
