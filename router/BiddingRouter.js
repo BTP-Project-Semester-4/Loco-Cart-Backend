@@ -61,7 +61,7 @@ biddingRouter.post(
                     }
                 })
             }else{
-                return res.status(404).send({message: "Could not find te requested resource"});
+                return res.status(404).send({message: "No seller available"});
             }
         }catch(err){
             console.log("Internal server error\n",err);
@@ -120,7 +120,7 @@ biddingRouter.post(
     expressAsyncHandler(async (req,res)=>{
         try{
             const customerId = req.body.customerId;
-            const sellerId = req.body.sellerId;
+            const sellerId = req.body.initialSellerId;
             const price = req.body.price;
             const itemList = req.body.itemList;
             const addressLine1 = req.body.addressLine1;
@@ -151,7 +151,7 @@ biddingRouter.post(
     })
 );
 
-biddingRouter.get(
+biddingRouter.post(
     '/getactivebids',
     expressAsyncHandler(async (req,res)=>{
         try{
@@ -190,13 +190,13 @@ biddingRouter.post(
             const price = req.body.price;
             const sellerId = req.body.sellerId;
             const bid = await Bid.findById(req.params.id);
-            if((Date.now - bid.orderedAt)/(1000*60)<180){
+            if((Date.now() - bid.orderedAt)/(1000*60)<180){
                 if(price < bid.bids[bid.bids.length-1].biddingPrice){
                     const seller = await Seller.findById(sellerId);
                     if(seller){
                         const bidItems = bid.itemList;
                         for(var i=0;i<bidItems.length;i++){
-                            const product = Product.findById(bidItems[i].itemId);
+                            const product = await Product.findById(bidItems[i].itemId);
                             const sellerMap = product.Sellers;
                             if(sellerMap.has(sellerId)){
                                 if(sellerMap.get(sellerId).Quantity < bidItems[i].quantity){
