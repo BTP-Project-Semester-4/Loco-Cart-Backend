@@ -193,9 +193,11 @@ customerRouter.get(
   "/:id",
   expressAsyncHandler(async (req, res) => {
     const customerId = req.params.id;
+    console.log(customerId);
     try {
       const customer = await Customer.findOne({ _id: customerId });
       if (customer) {
+        console.log(customer);
         //ratings/reviews to be sent once they are added to customer schema
         return res.status(200).send({
           message: "Success",
