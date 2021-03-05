@@ -16,6 +16,7 @@ const applicationRunning = require("./router/api.js");
 const reviewAndComments = require("./router/ReviewAndComments.js");
 const feedbackRouter = require("./router/Feedbacks.js");
 const biddingRouter = require("./router/BiddingRouter");
+const notificationRouter = require("./router/NotificationRouter.js");
 //DEFINING MODULES
 const app = express();
 const port = 3001 || process.env.PORT;
@@ -50,8 +51,8 @@ app.use("/api/categoryproducts", categoryProductRouter);
 app.use("/api/product", product);
 app.use("/api/reviewandcomment", reviewAndComments);
 app.use("/api/feedback", feedbackRouter);
-app.use("/api/bid",biddingRouter);
-
+app.use("/api/bid", biddingRouter);
+app.use("/api/notification", notificationRouter);
 //STARTING APP
 app.listen(process.env.PORT || 3001, () => {
   console.log(`Server Running at http://${hostname}:${port}/`);
