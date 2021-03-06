@@ -234,8 +234,6 @@ customerRouter.get(
       return res.send({
         _id: myCart.customerId,
         itemList: myCart.itemList,
-        totalPrice: myCart.totalPrice,
-        timeStamp: myCart.timeStamp,
         message: "Success",
       });
     } else {
@@ -243,6 +241,56 @@ customerRouter.get(
     }
   })
 );
+
+customerRouter.post(
+  '/addtocart',
+  expressAsyncHandler(async (req,res)=>{
+    const customerId = req.body.customerId;
+    const productId = req.body.productId;
+    const productName = req.body.productName;
+    const quantity = req.body.quantity;
+    var cart = await Cart.findOne({customerId: customerId});
+    console.log(productId)
+    if(cart){
+      var found = false;
+      for(var i=0;i<cart.itemList.length;i++){
+        if(cart.itemList[i].productId==productId){
+          cart.itemList[i].Quantity+=Number(quantity);
+          found=true;
+          break;
+        }
+      } 
+      
+      if(!found){
+        cart.itemList.push({
+          productId: productId,
+          productName: productName,
+          Quantity: quantity
+        });
+      }
+      const savedCart = await cart.save();
+      if(savedCart){
+        return res.status(200).send({message:"Success",cart:savedCart});
+      }
+
+    }else{
+      const newCart = new Cart({
+        customerId: customerId,
+        itemList:[
+          {
+            productId: productId,
+            productName: productName,
+            Quantity: quantity
+          }
+        ]
+      });
+      const savedCart = await newCart.save();
+      if(savedCart){
+        return res.status(200).send({message:"Success",cart:savedCart});
+      }
+    }
+  })
+)
 
 customerRouter.post(
   "/placeorder",
