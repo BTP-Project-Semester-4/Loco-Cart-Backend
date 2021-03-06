@@ -17,38 +17,14 @@ const cartSchema = new mongoose.Schema({
           type: String,
           required: true,
         },
-        SellerId: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Seller",
-        },
         Quantity: {
           type: Number,
           required: true,
-        },
-        Image: {
-          type: String,
-          required: true,
-        },
-        Description: {
-          type: String,
-          required: true,
-        },
-        Price: {
-          type: Number,
-          required: true,
-        },
+        }
       },
     ],
     required: true,
-  },
-  totalPrice: {
-    type: Number,
-    required: true,
-  },
-  timeStamp: {
-    type: Date,
-    default: Date.now,
-  },
+  }
 });
 
 module.exports = mongoose.model("Cart", cartSchema);
