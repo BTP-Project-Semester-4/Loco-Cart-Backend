@@ -3,6 +3,7 @@ const Bid = require('../model/Bid');
 const Customer = require('../model/Customer');
 const Product = require('../model/Product');
 const Seller = require('../model/Seller');
+const Cart = require('../model/Cart');
 const expressAsyncHandler = require("express-async-handler");
 const biddingRouter = express.Router();
 const nodemailer = require("nodemailer");
@@ -13,56 +14,81 @@ biddingRouter.post(
     '/getinitialbestseller',
     expressAsyncHandler(async (req,res)=>{
         try{
-            const itemList = req.body.itemList;
-            const city = req.body.city;
-            const sellers = await Seller.find({city: city});
-            var sellerList = [];
-            var priceMap = new Map();
-             sellers.forEach(seller=>{
-                sellerList.push(seller._id.toString());
-                priceMap.set(seller._id.toString(),0);
-            })
-            for(var i=0;i<itemList.length;i++){
-                const item = itemList[i];
-                const product = await Product.findById(item.itemId);
-                const sellerMap = product.Sellers;
-                var eligibleSellers = [];
-                sellerList.forEach(seller=>{
-                    if(sellerMap.has(seller)){
-                        if(sellerMap.get(seller).Quantity >= item.quantity){
-                            eligibleSellers.push(seller);
-                            priceMap.set(seller,priceMap.get(seller)+Number(item.quantity)*Number(sellerMap.get(seller).SellerPrice));
-                        }
-                    }
-                });
-                console.log("1",eligibleSellers)
-                sellerList = _.intersection(sellerList,eligibleSellers);
-                console.log("2",sellerList)
-            }
-            console.log(priceMap)
-            var minPrice=Number.MAX_SAFE_INTEGER,minSeller=undefined;
-            for(var i=0;i<sellerList.length;i++){
-                if(priceMap.get(sellerList[i])<minPrice){
-                    minPrice=priceMap.get(sellerList[i]);
-                    minSeller=sellerList[i];
-                }
-            }
-            if(minSeller!==undefined){
-                const sellerDetails = await Seller.findById(minSeller);
-                return res.status(200).send({
-                    message: "Success",
-                    minPrice: minPrice,
-                    seller: {
-                        firstName: sellerDetails.firstName,
-                        lastName: sellerDetails.lastName,
-                        address: sellerDetails.address,
-                        city: sellerDetails.city,
-                        interest: sellerDetails.category
-                    }
+            const cart = await Cart.findOne({customerId: req.body.id});
+            if(cart){
+                const itemList = cart.itemList;
+                const city = req.body.city;
+                const sellers = await Seller.find({city: city});
+                var sellerList = [];
+                var priceMap = new Map();
+                sellers.forEach(seller=>{
+                    sellerList.push(seller._id.toString());
+                    priceMap.set(seller._id.toString(),0);
                 })
+                for(var i=0;i<itemList.length;i++){
+                    const item = itemList[i];
+                    const product = await Product.findById(item.productId);
+                    const sellerMap = product.Sellers;
+                    var eligibleSellers = [];
+                    sellerList.forEach(seller=>{
+                        if(sellerMap.has(seller)){
+                            if(sellerMap.get(seller).Quantity >= item.Quantity){
+                                eligibleSellers.push(seller);
+                                priceMap.set(seller,priceMap.get(seller)+Number(item.Quantity)*Number(sellerMap.get(seller).SellerPrice));
+                            }
+                        }
+                    });
+                    console.log("1",eligibleSellers)
+                    sellerList = _.intersection(sellerList,eligibleSellers);
+                    console.log("2",sellerList)
+                }
+                console.log(priceMap)
+                var minPrice=Number.MAX_SAFE_INTEGER,minSeller=undefined;
+                for(var i=0;i<sellerList.length;i++){
+                    if(priceMap.get(sellerList[i])<minPrice){
+                        minPrice=priceMap.get(sellerList[i]);
+                        minSeller=sellerList[i];
+                    }
+                }
+                if(minSeller!==undefined){
+                    const sellerDetails = await Seller.findById(minSeller);
+                    const allProducts = await Product.find({});
+                    var itemDetails = [];
+                    for(var i=0;i<itemList.length;i++){
+                        const item = allProducts.find(data=>String(data._id)==String(itemList[i].productId));
+                        console.log(itemList[i].productId)
+                        itemDetails.push({
+                            id: itemList[i].productId,
+                            name: item.Name,
+                            category: item.Category,
+                            image: item.Sellers.get(minSeller).Image,
+                            minPrice: item.Sellers.get(minSeller).SellerPrice,
+                            quantity: itemList[i].Quantity,
+                            totalPrice: Number(item.Sellers.get(minSeller).SellerPrice)*Number(itemList[i].Quantity)
+                        });
+                    }
+                    
+                    return res.status(200).send({
+                        message: "Success",
+                        minPrice: minPrice,
+                        itemDetails: itemDetails,
+                        seller: {
+                            sellerId: minSeller,
+                            firstName: sellerDetails.firstName,
+                            lastName: sellerDetails.lastName,
+                            address: sellerDetails.address,
+                            city: sellerDetails.city,
+                            interest: sellerDetails.category,
+                            image: sellerDetails.profilePictureUrl
+                        }
+                    })
+                }else{
+                    return res.status(404).send({message: "No seller available"});
+                }
             }else{
-                return res.status(404).send({message: "No seller available"});
-            }
+                return res.status(404).send({message:"Cart empty"});
+            } 
+            
         }catch(err){
             console.log("Internal server error\n",err);
             return res.status(500).send({message: "Internal server error"});
