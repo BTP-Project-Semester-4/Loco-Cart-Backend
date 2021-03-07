@@ -61,7 +61,7 @@ biddingRouter.post(
                     }
                 })
             }else{
-                return res.status(404).send({message: "Could not find te requested resource"});
+                return res.status(404).send({message: "No seller available"});
             }
         }catch(err){
             console.log("Internal server error\n",err);
@@ -120,7 +120,7 @@ biddingRouter.post(
     expressAsyncHandler(async (req,res)=>{
         try{
             const customerId = req.body.customerId;
-            const sellerId = req.body.sellerId;
+            const sellerId = req.body.initialSellerId;
             const price = req.body.price;
             const itemList = req.body.itemList;
             const addressLine1 = req.body.addressLine1;
@@ -135,7 +135,10 @@ biddingRouter.post(
                 addressLine1: addressLine1,
                 addressLine2: addressLine2,
                 city: city,
-                bids: [],
+                bids: [{
+                    biddingPrice: price,
+                    sellerId: sellerId
+                }],
                 orderedAt: Date.now()
             });
 
@@ -148,7 +151,7 @@ biddingRouter.post(
     })
 );
 
-biddingRouter.get(
+biddingRouter.post(
     '/getactivebids',
     expressAsyncHandler(async (req,res)=>{
         try{
@@ -178,6 +181,57 @@ biddingRouter.get(
             return res.status(500).send({message: "Internal server error"});
         }
     })
-)
+);
+
+biddingRouter.post(
+    '/:id',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const price = req.body.price;
+            const sellerId = req.body.sellerId;
+            const bid = await Bid.findById(req.params.id);
+            if((Date.now() - bid.orderedAt)/(1000*60)<180){
+                if(price < bid.bids[bid.bids.length-1].biddingPrice){
+                    const seller = await Seller.findById(sellerId);
+                    if(seller){
+                        const bidItems = bid.itemList;
+                        for(var i=0;i<bidItems.length;i++){
+                            const product = await Product.findById(bidItems[i].itemId);
+                            const sellerMap = product.Sellers;
+                            if(sellerMap.has(sellerId)){
+                                if(sellerMap.get(sellerId).Quantity < bidItems[i].quantity){
+                                    return res.status(200).send({message:"Insufficient item availability from the seller side"});
+                                }
+                            }else{
+                                return res.status(200).send({message:"Insufficient item availability from the seller side"});
+                            }
+                        }
+                        const bidsArray = bid.bids;
+                        bidsArray.push({
+                            biddingPrice: price,
+                            sellerId: sellerId
+                        });
+                        const updatedBid = await Bid.updateOne({_id: req.params.id},
+                            {
+                                $set:{
+                                    bids: bidsArray
+                                }
+                            });
+                        return res.status(200).send({message: "Success", updatedBid: updatedBid});
+                    }else{
+                        return res.status(404).send({message: "Seller not found"})
+                    }
+                }else{
+                    return res.status(200).send({message: "Please enter an amount lower than the current lowest bid"});
+                }
+            }else{
+                return res.status(200).send({message: "Bidding period expired"});
+            }
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+);
 
 module.exports = biddingRouter;
