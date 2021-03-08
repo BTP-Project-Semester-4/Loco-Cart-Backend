@@ -181,10 +181,25 @@ biddingRouter.post(
     '/getactivebids',
     expressAsyncHandler(async (req,res)=>{
         try{
-            const city = req.body.city;
+            const seller = await Seller.findById(req.body.id);
+            const allProducts = await Product.find({});
+            const city = seller.city;
             var bids = await Bid.find({city:city});
             bids = bids.filter(bid=>(Date.now()-bid.orderedAt)/(1000*60)<180)
-            return res.status(200).send({message: "Success",bids: bids});
+            var bidItems = [];
+            bids.forEach(bid=>{
+                var allItems = [];
+                bid.itemList.forEach(item=>{
+                    const product = allProducts.find(product=>String(product._id)==String(item.itemId));
+                    console.log(product)
+                    allItems.push({
+                        name: product.Name,
+                        quantity: item.quantity
+                    })
+                })
+                bidItems.push(allItems)
+            })
+            return res.status(200).send({message: "Success",bids: bids, bidItems: bidItems});
         }catch(err){
             console.log("Internal server error\n",err);
             return res.status(500).send({message: "Internal server error"});
