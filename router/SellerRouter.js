@@ -216,4 +216,72 @@ sellerRouter.get(
   })
 );
 
+sellerRouter.post(
+  "/editprofile",
+  expressAsyncHandler(async (req, res) => {
+    const userId = req.body.userId;
+    const userData = await Seller.findOne({ email: req.body.email });
+    if (userData) {
+      if (userData.isAuthenticated) {
+        if (req.body.password) {
+          const updateProfile = await Seller.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                email: req.body.email,
+                contactNo: req.body.contactNo,
+                address: req.body.address,
+                city: req.body.city,
+                state: req.body.state,
+                country: req.body.country,
+                password: bcrypt.hashSync(req.body.password, 8),
+              },
+            },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+                res.send({ message: "could not update you profile :(" });
+              } else {
+                console.log(req.body.email + " profile updated !!!");
+              }
+            }
+          );
+          res.send({ updateProfile, message: "Success" });
+        } else {
+          const updateProfile = await Seller.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                email: req.body.email,
+                contactNo: req.body.contactNo,
+                address: req.body.address,
+                city: req.body.city,
+                state: req.body.state,
+                country: req.body.country,
+              },
+            },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+                res.send({ message: "could not update you profile :(" });
+              } else {
+                console.log(req.body.email + " profile updated !!!");
+              }
+            }
+          );
+          res.send({ updateProfile, message: "Success" });
+        }
+      } else {
+        console.log(userData);
+        res.send({ message: "please authorize your self :(" });
+      }
+    } else {
+      res.send({ message: "seller not found :(" });
+    }
+  })
+);
 module.exports = sellerRouter;

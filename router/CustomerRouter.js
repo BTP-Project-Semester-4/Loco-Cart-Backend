@@ -160,7 +160,7 @@ customerRouter.post(
   "/verifycustomertype",
   expressAsyncHandler(async (req, res) => {
     const customer = await Customer.findById(req.body.id);
-    return res.status(200).send({isverified : customer.isAuthenticated});
+    return res.status(200).send({ isverified: customer.isAuthenticated });
   })
 );
 
@@ -209,6 +209,7 @@ customerRouter.get(
             state: customer.state,
             country: customer.country,
             contactNo: customer.contactNo,
+            address: customer.address,
           },
         });
       }
@@ -243,54 +244,53 @@ customerRouter.get(
 );
 
 customerRouter.post(
-  '/addtocart',
-  expressAsyncHandler(async (req,res)=>{
+  "/addtocart",
+  expressAsyncHandler(async (req, res) => {
     const customerId = req.body.customerId;
     const productId = req.body.productId;
     const productName = req.body.productName;
     const quantity = req.body.quantity;
-    var cart = await Cart.findOne({customerId: customerId});
-    console.log(productId)
-    if(cart){
+    var cart = await Cart.findOne({ customerId: customerId });
+    console.log(productId);
+    if (cart) {
       var found = false;
-      for(var i=0;i<cart.itemList.length;i++){
-        if(cart.itemList[i].productId==productId){
-          cart.itemList[i].Quantity+=Number(quantity);
-          found=true;
+      for (var i = 0; i < cart.itemList.length; i++) {
+        if (cart.itemList[i].productId == productId) {
+          cart.itemList[i].Quantity += Number(quantity);
+          found = true;
           break;
         }
-      } 
-      
-      if(!found){
+      }
+
+      if (!found) {
         cart.itemList.push({
           productId: productId,
           productName: productName,
-          Quantity: quantity
+          Quantity: quantity,
         });
       }
       const savedCart = await cart.save();
-      if(savedCart){
-        return res.status(200).send({message:"Success",cart:savedCart});
+      if (savedCart) {
+        return res.status(200).send({ message: "Success", cart: savedCart });
       }
-
-    }else{
+    } else {
       const newCart = new Cart({
         customerId: customerId,
-        itemList:[
+        itemList: [
           {
             productId: productId,
             productName: productName,
-            Quantity: quantity
-          }
-        ]
+            Quantity: quantity,
+          },
+        ],
       });
       const savedCart = await newCart.save();
-      if(savedCart){
-        return res.status(200).send({message:"Success",cart:savedCart});
+      if (savedCart) {
+        return res.status(200).send({ message: "Success", cart: savedCart });
       }
     }
   })
-)
+);
 
 customerRouter.post(
   "/placeorder",
@@ -309,6 +309,75 @@ customerRouter.post(
       itemList: createCart.itemList,
       totalPrice: createCart.totalPrice,
     });
+  })
+);
+
+customerRouter.post(
+  "/editprofile",
+  expressAsyncHandler(async (req, res) => {
+    const userId = req.body.userId;
+    const userData = await Customer.findOne({ email: req.body.email });
+    if (userData) {
+      if (userData.isAuthenticated) {
+        if (req.body.password) {
+          const updateProfile = await Customer.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                email: req.body.email,
+                contactNo: req.body.contactNo,
+                address: req.body.address,
+                city: req.body.city,
+                state: req.body.state,
+                country: req.body.country,
+                password: bcrypt.hashSync(req.body.password, 8),
+              },
+            },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+                res.send({ message: "could not update you profile :(" });
+              } else {
+                console.log(req.body.email + " profile updated !!!");
+              }
+            }
+          );
+          res.send({ updateProfile, message: "Success" });
+        } else {
+          const updateProfile = await Customer.findOneAndUpdate(
+            { _id: userId },
+            {
+              $set: {
+                firstName: req.body.firstName,
+                lastName: req.body.lastName,
+                email: req.body.email,
+                contactNo: req.body.contactNo,
+                address: req.body.address,
+                city: req.body.city,
+                state: req.body.state,
+                country: req.body.country,
+              },
+            },
+            function (err, res) {
+              if (err) {
+                console.log(err);
+                res.send({ message: "could not update you profile :(" });
+              } else {
+                console.log(req.body.email + " profile updated !!!");
+              }
+            }
+          );
+          res.send({ updateProfile, message: "Success" });
+        }
+      } else {
+        console.log(userData);
+        res.send({ message: "please authorize your self :(" });
+      }
+    } else {
+      res.send({ message: "customer not found :(" });
+    }
   })
 );
 
