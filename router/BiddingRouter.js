@@ -181,10 +181,25 @@ biddingRouter.post(
     '/getactivebids',
     expressAsyncHandler(async (req,res)=>{
         try{
-            const city = req.body.city;
+            const seller = await Seller.findById(req.body.id);
+            const allProducts = await Product.find({});
+            const city = seller.city;
             var bids = await Bid.find({city:city});
             bids = bids.filter(bid=>(Date.now()-bid.orderedAt)/(1000*60)<180)
-            return res.status(200).send({message: "Success",bids: bids});
+            var bidItems = [];
+            bids.forEach(bid=>{
+                var allItems = [];
+                bid.itemList.forEach(item=>{
+                    const product = allProducts.find(product=>String(product._id)==String(item.itemId));
+                    console.log(product)
+                    allItems.push({
+                        name: product.Name,
+                        quantity: item.quantity
+                    })
+                })
+                bidItems.push(allItems)
+            })
+            return res.status(200).send({message: "Success",bids: bids, bidItems: bidItems});
         }catch(err){
             console.log("Internal server error\n",err);
             return res.status(500).send({message: "Internal server error"});
@@ -192,40 +207,27 @@ biddingRouter.post(
     })
 )
 
-biddingRouter.get(
-    '/:id',
-    expressAsyncHandler(async (req,res)=>{
-        try{
-            const bid = await Bid.findById(req.params.id);
-            if(bid){
-                return res.status(200).send({message:"Success",bid: bid});
-            }else{
-                return res.status(404).send({message:"Could not find the requested resource"});
-            }
-        }catch(err){
-            console.log("Internal server error\n",err);
-            return res.status(500).send({message: "Internal server error"});
-        }
-    })
-);
-
 biddingRouter.post(
-    '/:id',
+    '/placebid',
     expressAsyncHandler(async (req,res)=>{
         try{
+            console.log(req.body)
+            console.log("adsds")
             const price = req.body.price;
             const sellerId = req.body.sellerId;
-            const bid = await Bid.findById(req.params.id);
+            const bid = await Bid.findById(req.body.bidId);
             if((Date.now() - bid.orderedAt)/(1000*60)<180){
                 if(price < bid.bids[bid.bids.length-1].biddingPrice){
                     const seller = await Seller.findById(sellerId);
+                    console.log(seller);
                     if(seller){
                         const bidItems = bid.itemList;
+                        console.log(bidItems)
                         for(var i=0;i<bidItems.length;i++){
                             const product = await Product.findById(bidItems[i].itemId);
                             const sellerMap = product.Sellers;
                             if(sellerMap.has(sellerId)){
-                                if(sellerMap.get(sellerId).Quantity < bidItems[i].quantity){
+                                if(Number(sellerMap.get(sellerId).Quantity) < Number(bidItems[i].quantity)){
                                     return res.status(200).send({message:"Insufficient item availability from the seller side"});
                                 }
                             }else{
@@ -237,7 +239,7 @@ biddingRouter.post(
                             biddingPrice: price,
                             sellerId: sellerId
                         });
-                        const updatedBid = await Bid.updateOne({_id: req.params.id},
+                        const updatedBid = await Bid.updateOne({_id: req.body.bidId},
                             {
                                 $set:{
                                     bids: bidsArray
@@ -253,6 +255,57 @@ biddingRouter.post(
             }else{
                 return res.status(200).send({message: "Bidding period expired"});
             }
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+);
+
+biddingRouter.post(
+    '/:id',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const bid = await Bid.findById(req.params.id);
+            const allSellers = await Seller.find({});
+            const seller = allSellers.find(data=>String(data._id)==String(req.body.sellerId));
+            console.log(req.body)
+            if(seller){
+                if(bid){
+                    if(bid.city == seller.city){
+                        const allProducts = await Product.find({});
+                        console.log(bid)
+                        var resProducts = [];
+                        var resSellers = [];
+                        for(var i=0;i<bid.itemList.length;i++){
+                            const product = allProducts.find(p=>String(p._id)==String(bid.itemList[i].itemId));
+                            resProducts.push({
+                                name: product.Name,
+                                category: product.Category,
+                                quantity: bid.itemList[i].quantity,
+                                image: product.Sellers.get(String(bid.initialSellerId)).Image,
+                            });
+                        }
+                        for(var i=bid.bids.length-1;i>=0;i--){
+                            const seller = allSellers.find(s=>String(s._id)==String(bid.bids[i].sellerId));
+                            resSellers.push({
+                                name: seller.firstName + " " + seller.lastName,
+                                image: seller.profilePictureUrl,
+                                biddingPrice: bid.bids[i].biddingPrice
+                            });
+                        }
+                        return res.status(200).send({message:"Success",bid: bid,products: resProducts, sellers: resSellers});
+                    }else{
+                        return res.status(400).send({message:"Seller city not within bidding zone"})
+                    }
+                    
+                }else{
+                    return res.status(404).send({message:"Could not find the requested resource"});
+                }
+            }else{
+                return res.status(404).send({message:"Invalid seller"});
+            }
+            
         }catch(err){
             console.log("Internal server error\n",err);
             return res.status(500).send({message: "Internal server error"});
