@@ -91,6 +91,53 @@ customerRouter.post(
 );
 
 customerRouter.post(
+    "/forgotpassword",
+    expressAsyncHandler(async(req, res) => {
+        if (!req.body.email) {
+            return res.send({ message: "Please enter email id" });
+        }
+        const customer = await Customer.findOne({ email: req.body.email });
+        if (customer) {
+            console.log(req.body.email + " signin found in database");
+            var digits = "0123456789";
+            let newpasword = "";
+            for (let i = 0; i < 6; i++) {
+                newpasword += digits[Math.floor(Math.random() * 10)];
+            }
+            console.log(newpasword);
+
+            const transporter = nodemailer.createTransport(
+                sendgridTransport({
+                    auth: {
+                        api_key: process.env.SEND_GRID,
+                    },
+                })
+            );
+
+            transporter.sendMail({
+                to: req.body.email,
+                from: process.env.COMPANY_EMAIL,
+                subject: "New Password",
+                html: `<h1>Welcome to Lococart...</h1>
+          <i>System generated new password for your email.</i><br/>
+          Your Password is:  <h2>${newpasword}</h2>. <br/>`,
+            });
+            // const userId = req.body.userId;
+            const updateProfile = await Customer.findOneAndUpdate({ email: req.body.email }, {
+                $set: {
+                    password: bcrypt.hashSync(newpasword, 8),
+                }
+            })
+            res.status(200).send({
+                message: "Mail Send"
+            })
+        } else {
+            return res.send({ message: "Please enter valid email" });
+        }
+    })
+);
+
+customerRouter.post(
   "/register",
   expressAsyncHandler(async (req, res) => {
     console.log(req.body.email + " requested to register");
