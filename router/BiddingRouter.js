@@ -169,6 +169,11 @@ biddingRouter.post(
             });
 
             const createdBid = await bid.save();
+
+            var updateCart = await Cart.findOne({customerId: customerId});
+            updateCart.itemList=[];
+            updateCart.save();
+
             return res.status(200).send({message: "Success", createdBid: createdBid});
         }catch(err){
             console.log("Internal server error\n",err);
