@@ -380,6 +380,7 @@ customerRouter.post(
                 state: req.body.state,
                 country: req.body.country,
                 password: bcrypt.hashSync(req.body.password, 8),
+                profilePictureUrl: req.body.profilePicUrl,
               },
             },
             function (err, res) {
@@ -405,6 +406,7 @@ customerRouter.post(
                 city: req.body.city,
                 state: req.body.state,
                 country: req.body.country,
+                profilePictureUrl: req.body.profilePicUrl,
               },
             },
             function (err, res) {

@@ -213,6 +213,33 @@ biddingRouter.post(
 )
 
 biddingRouter.post(
+    '/getcustomerbids',
+    expressAsyncHandler(async (req,res)=>{
+        try{
+            const allProducts = await Product.find({});
+            var bids = await Bid.find({customerId: req.body.customerId});
+            var bidItems = [];
+            bids.forEach(bid=>{
+                var allItems = [];
+                bid.itemList.forEach(item=>{
+                    const product = allProducts.find(product=>String(product._id)==String(item.itemId));
+                    console.log(product)
+                    allItems.push({
+                        name: product.Name,
+                        quantity: item.quantity
+                    })
+                })
+                bidItems.push(allItems)
+            })
+            return res.status(200).send({message: "Success",bids: bids, bidItems: bidItems});
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+)
+
+biddingRouter.post(
     '/placebid',
     expressAsyncHandler(async (req,res)=>{
         try{
@@ -317,5 +344,43 @@ biddingRouter.post(
         }
     })
 );
+
+biddingRouter.post(
+    '/customer/:id',
+    expressAsyncHandler(async (req, res)=>{
+        try{
+            const bid = await Bid.findById(req.params.id);
+            if(String(bid.customerId)==String(req.body.customerId)){
+                const allProducts = await Product.find({});
+                const allSellers = await Seller.find({});
+                var resProducts = [];
+                var resSellers = [];
+                for(var i=0;i<bid.itemList.length;i++){
+                    const product = allProducts.find(p=>String(p._id)==String(bid.itemList[i].itemId));
+                    resProducts.push({
+                        name: product.Name,
+                        category: product.Category,
+                        quantity: bid.itemList[i].quantity,
+                        image: product.Sellers.get(String(bid.initialSellerId)).Image,
+                    });
+                }
+                for(var i=bid.bids.length-1;i>=0;i--){
+                    const seller = allSellers.find(s=>String(s._id)==String(bid.bids[i].sellerId));
+                    resSellers.push({
+                        name: seller.firstName + " " + seller.lastName,
+                        image: seller.profilePictureUrl,
+                        biddingPrice: bid.bids[i].biddingPrice
+                    });
+                }
+                return res.status(200).send({message:"Success",bid: bid,products: resProducts, sellers: resSellers});
+            }else{
+                return res.status(404).send({message:"Could not find the requested resource"});
+            }
+        }catch(err){
+            console.log("Internal server error\n",err);
+            return res.status(500).send({message: "Internal server error"});
+        }
+    })
+)
 
 module.exports = biddingRouter;
