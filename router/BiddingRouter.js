@@ -9,7 +9,7 @@ const biddingRouter = express.Router();
 const nodemailer = require("nodemailer");
 const _ = require('lodash');
 const env = require("dotenv").config();
-
+const sendgridTransport = require("nodemailer-sendgrid-transport");
 //TO GET THE CURRENT BEST SELLER BASED ON THE CART ITEMS AND CITY NAME
 //TO BE CALLED AFTER COMPLETION OF 1ST STEP IN PLACE ORDER
 biddingRouter.post(
@@ -116,8 +116,8 @@ biddingRouter.post(
                     for(var i=0;i<itemList.length;i++){
                         //FIND THE GIVEN CART ITEM IN THE ALLPRODUCTS ARRAY
                         const item = allProducts.find(data=>String(data._id)==String(itemList[i].productId));
-                        console.log(itemList[i].productId)
-                        console.log(Array.from(item.Sellers)[0]);
+                        // console.log(itemList[i].productId)
+                        // console.log(Array.from(item.Sellers)[0]);
                         //PUSH THE RELEAVANT DETAILS IN THE ITEMDETAILS ARRAY
                         itemDetails.push({
                             id: itemList[i].productId,
@@ -156,31 +156,26 @@ biddingRouter.post(
             for (let i = 0; i < 6; i++) {
                 OTP += digits[Math.floor(Math.random() * 10)];
             }
+            
 
-            //SENDING OTP TO GIVEN EMAIL USING NODE-MAILER
-            let transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                user: process.env.COMPANY_EMAIL,
-                pass: process.env.COMPANY_PASSWORD,
-                },
-            });
-
-            let mailOptions = {
-                from: process.env.COMPANY_EMAIL,
+            const transporter = nodemailer.createTransport(
+                sendgridTransport({
+                  auth: {
+                    api_key: process.env.SEND_GRID,
+                  },
+                })
+              );
+    
+              transporter.sendMail({
                 to: customer.email,
+                from: process.env.COMPANY_EMAIL,
                 subject: "One Time Password for email verification",
-                text: `Welcome to Lococart...You are just one step away from placing your order.
-                    Your OTP is ${OTP}. Just Enter this OTP on the email verification screen`,
-            };
+                html: `<h1>Welcome to Lococart...</h1>
+              <i>You are just one step away from placing your order.</i><br/>
+              Your OTP is:  <h2>${OTP}</h2>. <br/>Just Enter this OTP on the email verification screen`,
+              });
 
-            transporter.sendMail(mailOptions, function (err, data) {
-                if (err) {
-                console.log("Error :", err);
-                } else {
-                console.log("OTP Email sent successfully");
-                }
-            });
+           
             res.status(200).send({message: "Success", otp:OTP});
         }catch(err){
             console.log("Internal server error\n",err);
