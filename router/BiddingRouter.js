@@ -109,7 +109,27 @@ biddingRouter.post(
                         }
                     })
                 }else{
-                    return res.status(404).send({message: "No seller available"});
+                    const allProducts = await Product.find({});
+                    //ITEMDETAILS WILL CONTAIN THE DETAILS OF AN ITEM THAT WE'LL SEND TO THE FRONTEND
+                    var itemDetails = [];
+                    //FOR EVERY ITEM IN THE CART DO THE FOLLOWING
+                    for(var i=0;i<itemList.length;i++){
+                        //FIND THE GIVEN CART ITEM IN THE ALLPRODUCTS ARRAY
+                        const item = allProducts.find(data=>String(data._id)==String(itemList[i].productId));
+                        console.log(itemList[i].productId)
+                        console.log(Array.from(item.Sellers)[0]);
+                        //PUSH THE RELEAVANT DETAILS IN THE ITEMDETAILS ARRAY
+                        itemDetails.push({
+                            id: itemList[i].productId,
+                            name: item.Name,
+                            category: item.Category,
+                            image: Array.from(item.Sellers)[0],
+                            // minPrice: Array.from(item.Sellers)[0].SellerPrice,
+                            quantity: itemList[i].Quantity,
+                            // totalPrice: Number(Array.from(item.Sellers)[0].SellerPrice)*Number(itemList[i].Quantity)
+                        });
+                    }
+                    return res.status(404).send({message: "No seller available",itemDetails : itemDetails});
                 }
             }else{
                 return res.status(404).send({message:"Cart empty"});
