@@ -348,7 +348,7 @@ customerRouter.post(
     const customerId = req.body.customerId;
     const productId = req.body.productId;
     var cart = await Cart.findOne({ customerId: customerId });
-    console.log(productId);
+    console.log(productId + " " + customerId);
     if (cart) {
       const updatedcart = await Cart.update(
         { customerId: customerId },
@@ -359,6 +359,28 @@ customerRouter.post(
       return res
         .status(200)
         .send({ message: "No item found !!!", cart: savedCart });
+    }
+  })
+);
+
+customerRouter.post(
+  "/updatevalueofcart",
+  expressAsyncHandler(async (req, res) => {
+    const customerId = req.body.customerId;
+    const productId = req.body.productId;
+    const qty = req.body.qty;
+    var cart = await Cart.findOne({ customerId: customerId });
+    console.log(productId + " " + customerId);
+    if (cart) {
+      const updatedcart = await Cart.updateOne(
+        { customerId: customerId, "itemList.productId": productId },
+        { $set: { "itemList.$.Quantity": qty } }
+      );
+      return res.status(200).send({ message: "Success", updatedcart });
+    } else {
+      return res
+        .status(200)
+        .send({ message: "Something went wrong !!!", cart: savedCart });
     }
   })
 );
