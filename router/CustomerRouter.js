@@ -64,9 +64,14 @@ customerRouter.post(
             }
           );
         }
-        const token = jwt.sign({ _id: customer._id }, process.env.JWT_SECRET, {
-          expiresIn: "28d",
-        });
+
+        const token = jwt.sign(
+          { _id: customer._id, city: customer.city },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "28d",
+          }
+        );
         return res.send({
           _id: customer._id,
           firstName: customer.firstName,
