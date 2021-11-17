@@ -331,29 +331,34 @@ biddingRouter.post(
   "/getsellerbids",
   expressAsyncHandler(async (req, res) => {
     try {
+      console.log(req.body.sellerId);
       const allProducts = await Product.find({});
       //FIND ALL THE BIDS/ORDERS OF THE GIVEN CUSTOMER
-      var bids = await Bid.find({ sellerId: req.body.customerId });
+      var bids = await Bid.find({});
       var bidItems = [];
+      var new_bid = [];
       //FOR EACH BID PUSH THE ITEM DETAILS FOR EACH OF ITS ITEMS INTO THE ALL ITEMS ARRAY
       //AND IN TURN PUSH THE ALL ITEMS ARRAY INTO THE BID ITEMS ARRAY
       bids.forEach((bid) => {
-        var allItems = [];
-        bid.itemList.forEach((item) => {
-          const product = allProducts.find(
-            (product) => String(product._id) == String(item.itemId)
-          );
-          console.log(product);
-          allItems.push({
-            name: product.Name,
-            quantity: item.quantity,
+        if (bid.bids[bid.bids.length - 1].sellerId == req.body.sellerId) {
+          var allItems = [];
+          bid.itemList.forEach((item) => {
+            const product = allProducts.find(
+              (product) => String(product._id) == String(item.itemId)
+            );
+            console.log(product);
+            allItems.push({
+              name: product.Name,
+              quantity: item.quantity,
+            });
           });
-        });
-        bidItems.push(allItems);
+          bidItems.push(allItems);
+          new_bid.push(bid);
+        }
       });
       return res
         .status(200)
-        .send({ message: "Success", bids: bids, bidItems: bidItems });
+        .send({ message: "Success", bids: new_bid, bidItems: bidItems });
     } catch (err) {
       console.log("Internal server error\n", err);
       return res.status(500).send({ message: "Internal server error" });
@@ -393,20 +398,16 @@ biddingRouter.post(
                   Number(sellerMap.get(sellerId).Quantity) <
                   Number(bidItems[i].quantity)
                 ) {
-                  return res
-                    .status(200)
-                    .send({
-                      message:
-                        "Insufficient item availability from the seller side",
-                    });
-                }
-              } else {
-                return res
-                  .status(200)
-                  .send({
+                  return res.status(200).send({
                     message:
                       "Insufficient item availability from the seller side",
                   });
+                }
+              } else {
+                return res.status(200).send({
+                  message:
+                    "Insufficient item availability from the seller side",
+                });
               }
             }
             //ALL CHECKS DONE....HENCE WE PUSH THE NEW BID
@@ -430,12 +431,9 @@ biddingRouter.post(
             return res.status(404).send({ message: "Seller not found" });
           }
         } else {
-          return res
-            .status(200)
-            .send({
-              message:
-                "Please enter an amount lower than the current lowest bid",
-            });
+          return res.status(200).send({
+            message: "Please enter an amount lower than the current lowest bid",
+          });
         }
       } else {
         return res.status(200).send({ message: "Bidding period expired" });
@@ -489,14 +487,12 @@ biddingRouter.post(
                 biddingPrice: bid.bids[i].biddingPrice,
               });
             }
-            return res
-              .status(200)
-              .send({
-                message: "Success",
-                bid: bid,
-                products: resProducts,
-                sellers: resSellers,
-              });
+            return res.status(200).send({
+              message: "Success",
+              bid: bid,
+              products: resProducts,
+              sellers: resSellers,
+            });
           } else {
             return res
               .status(400)
@@ -553,14 +549,12 @@ biddingRouter.post(
             biddingPrice: bid.bids[i].biddingPrice,
           });
         }
-        return res
-          .status(200)
-          .send({
-            message: "Success",
-            bid: bid,
-            products: resProducts,
-            sellers: resSellers,
-          });
+        return res.status(200).send({
+          message: "Success",
+          bid: bid,
+          products: resProducts,
+          sellers: resSellers,
+        });
       } else {
         return res
           .status(404)
