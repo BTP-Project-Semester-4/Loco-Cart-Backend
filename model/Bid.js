@@ -47,6 +47,10 @@ const bidSchema = new mongoose.Schema({
     orderedAt: {
         type: Date,
         default: Date.now
+    },
+    latestTime:{
+        type:Date,
+        default:-1
     }
 })
 

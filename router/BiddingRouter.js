@@ -385,6 +385,7 @@ biddingRouter.post(
           console.log(seller);
           //CHECK WHETHER GIVEN SELLER EXISTS OR NOT
           if (seller) {
+
             const bidItems = bid.itemList;
             console.log(bidItems);
             //CHECK WHETHER THE GIVEN SELLER HAS THE BID ITEMS IN SUFFICIENT QUANTITY OR NOT
@@ -410,6 +411,7 @@ biddingRouter.post(
                 });
               }
             }
+            if()
             //ALL CHECKS DONE....HENCE WE PUSH THE NEW BID
             const bidsArray = bid.bids;
             bidsArray.push({
